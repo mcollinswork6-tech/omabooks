@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Invoice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;600;700&display=swap"
+        rel="stylesheet" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 40px;
+            color: #111;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .logo-circle {
+            width: 130px;
+            height: 130px;
+            border: 1px solid #000;
+            border-radius: 50%;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
+            transform: rotate(45deg);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            margin-left: -65px;
+            z-index: -1;
+        }
+
+        .logo-circle-2 {
+            width: 130px;
+            height: 130px;
+            border: 1px solid #000;
+            border-radius: 50%;
+            border-left-color: transparent;
+            border-top-color: transparent;
+            transform: rotate(45deg);
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            margin-left: -65px;
+            z-index: -1;
+        }
+
+        .logo-top {
+            font-family: 'Great Vibes', cursive;
+            font-size: 32px;
+            line-height: 1;
+            margin: 0;
+            position: relative;
+            top: 10px;
+            color: #555;
+        }
+
+        .logo-main {
+            letter-spacing: 12px;
+            font-weight: 700;
+            font-size: 26px;
+            margin: 5px 0 5px 0;
+        }
+
+        .logo-sub {
+            font-size: 10px;
+            letter-spacing: 5px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+
+        .info-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        .info-content {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            padding: 15px 0;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #000;
+        }
+
+        td {
+            padding: 18px 0;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .total-banner {
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+        }
+
+        .summary-table {
+            width: 250px;
+            margin-left: auto;
+            border-collapse: collapse;
+        }
+
+        .summary-table td {
+            padding: 7px 0;
+            border: none;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 80px;
+        }
+
+        .bank-details {
+            font-size: 11px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .signature {
+            font-family: 'Great Vibes', cursive;
+            font-size: 60px;
+            color: #333;
+            line-height: 0.8;
+            transform: rotate(-5deg);
+            margin-right: 20px;
+            display: inline-block;
+        }
+
+        .print-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #4361ee;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 40px;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        .print-btn:hover {
+            background: #3651d4;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .print-btn {
+                display: none;
+            }
+        }
+
+        #loading {
+            text-align: center;
+            margin-top: 100px;
+            font-size: 18px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        #invoice-container {
+            display: none;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading">Locating Secure Invoice...</div>
+    <div id="invoice-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyACIj_G1N0wjU_t9peiZTmSEfTkvUyH1So",
+            authDomain: "omabooks-5437e.firebaseapp.com",
+            projectId: "omabooks-5437e",
+            storageBucket: "omabooks-5437e.firebasestorage.app",
+            messagingSenderId: "156587515821",
+            appId: "1:156587515821:web:2e93685aff44987afdcb24"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadInvoice() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            const loader = document.getElementById('loading');
+
+            if (!id) {
+                loader.innerHTML = "<span class='error'>Invalid Link: No Invoice ID provided.</span>";
+                return;
+            }
+
+            try {
+                const docSnap = await getDoc(doc(db, 'invoices', id));
+                if (!docSnap.exists()) {
+                    loader.innerHTML = "<span class='error'>Invoice not found or deleted.</span>";
+                    return;
+                }
+
+                const data = docSnap.data();
+                const amount = Number(data.amount) || 0;
+
+                // Fetch template using the owner's userId
+                const tplSnap = await getDoc(doc(db, 'invoices', `TEMPLATE_${data.userId}`));
+                let tpl = {
+                    brandName: 'THE CIRCLE',
+                    subtitle: 'DESIGN STUDIO',
+                    companyInfo: '<div>Really Great Company</div><div>hello@reallygreatsite.com</div>',
+                    bankDetails: '<div>Borcele Bank</div><div>Account Name: Avery Davis</div><div>Account No.: 123-456-7890</div><div>Pay by: 5 July 2025</div>',
+                    signature: '<span style="font-size: 44px; display: block; transform: translateX(-20px);">thank</span><span style="display: block; transform: translateX(20px);">You</span>'
+                };
+
+                if (tplSnap.exists() && tplSnap.data().isTemplateObject) {
+                    const td = tplSnap.data();
+                    if (td.brandName) tpl.brandName = td.brandName;
+                    if (td.subtitle) tpl.subtitle = td.subtitle;
+                    if (td.companyInfo) tpl.companyInfo = td.companyInfo;
+                    if (td.bankDetails) tpl.bankDetails = td.bankDetails;
+                    if (td.signature) tpl.signature = td.signature;
+                }
+
+                let itemsHtml = '';
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(item => {
+                        const itemTotal = (parseFloat(item.price) || 0) * (parseFloat(item.qty) || 1);
+                        itemsHtml += `
+                        <tr>
+                            <td style="text-align: left;">${item.desc}</td>
+                            <td style="text-align: center;">${(parseFloat(item.price) || 0).toFixed(0)}</td>
+                            <td style="text-align: center;">${parseFloat(item.qty) || 1}</td>
+                            <td style="text-align: right;">$${itemTotal.toFixed(0)}</td>
+                        </tr>`;
+                    });
+                } else {
+                    itemsHtml = `<tr>
+                        <td style="text-align: left;">${data.description}</td>
+                        <td style="text-align: center;">${amount.toFixed(0)}</td>
+                        <td style="text-align: center;">1</td>
+                        <td style="text-align: right;">$${amount.toFixed(0)}</td>
+                    </tr>`;
+                }
+
+                const displayDate = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString('en-GB').replace(/\//g, '.') : new Date().toLocaleDateString('en-GB').replace(/\//g, '.');
+
+                const html = `
+                <button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+                <div class="logo-section">
+                    <div class="logo-circle"></div>
+                    <div class="logo-circle-2"></div>
+                    <div class="logo-top">the</div>
+                    <div class="logo-main">${tpl.brandName}</div>
+                    <div class="logo-sub">${tpl.subtitle}</div>
+                </div>
+                <div class="header-info">
+                    <div style="flex: 1;">
+                        <div class="info-title">ISSUED TO:</div>
+                        <div class="info-content">
+                            <div>${data.client}</div>
+                            ${tpl.companyInfo}
+                        </div>
+                    </div>
+                    <div style="flex: 1; text-align: right;">
+                        <div class="info-title">INVOICE NO:</div>
+                        <div class="info-content">
+                            <div style="font-weight: 700; margin-bottom: 8px; color: #000; letter-spacing: 1px;">#${id.substring(0, 6).toUpperCase()}</div>
+                            <div style="letter-spacing: 1px;">${displayDate}</div>
+                        </div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">DESCRIPTION</th>
+                            <th style="text-align: center;">UNIT PRICE</th>
+                            <th style="text-align: center;">QTY</th>
+                            <th style="text-align: right;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itemsHtml}</tbody>
+                </table>
+                <div class="total-banner">
+                    <div>TOTAL</div>
+                    <div>$${amount.toFixed(0)}</div>
+                </div>
+                <table class="summary-table">
+                    <tr>
+                        <td style="text-align: right; width: 60%; letter-spacing: 1px;">Total</td>
+                        <td style="text-align: right;">$${amount.toFixed(0)}</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right; letter-spacing: 1px;">Tax</td>
+                        <td style="text-align: right;">10%</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right; font-weight: 700; color: #000; letter-spacing: 1px;">Amount due</td>
+                        <td style="text-align: right; font-weight: 700; color: #000;">$${(amount * 1.1).toFixed(0)}</td>
+                    </tr>
+                </table>
+                <div class="footer">
+                    <div>
+                        <div class="info-title">BANK DETAILS</div>
+                        <div class="info-content">${tpl.bankDetails}</div>
+                    </div>
+                    <div>
+                        <div class="signature">${tpl.signature}</div>
+                    </div>
+                </div>`;
+
+                loader.style.display = 'none';
+                const container = document.getElementById('invoice-container');
+                container.innerHTML = html;
+                container.style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                if (err.message.includes('permission')) {
+                    loader.innerHTML = "<span class='error'>Access Denied. You may need to update Firebase public read Rules.</span>";
+                } else {
+                    loader.innerHTML = "<span class='error'>Error loading securely. Please try again.</span>";
+                }
+            }
+        }
+
+        loadInvoice();
+    </script>
+</body>
+
+</html>

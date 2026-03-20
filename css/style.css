@@ -1,0 +1,113 @@
+:root {
+    --bs-body-bg: #e5ecf7; /* Modern soft gray background */
+    --bs-primary: #4361ee; /* Vibrant indigo instead of standard blue */
+    --bs-border-radius: 12px;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+/* Modern Soft Cards */
+.card {
+    border: none;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Stat Cards Customization */
+.stat-card-value {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+/* Clean Form Inputs */
+.form-control, .form-select {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    border-color: var(--bs-primary);
+}
+
+/* Table Refinement */
+.table {
+    --bs-table-hover-bg: #f1f5f9;
+}
+
+.table thead th {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    border-top: none;
+}
+
+/* Auth Screen Gradient */
+#auth-container {
+    background: radial-gradient(circle at top right, #4361ee, #3f37c9);
+}
+
+.auth-box {
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+/* Modern Action Buttons */
+.delete-inline-btn {
+    background: #fee2e2; /* Soft red background */
+    color: #ef4444;    /* Strong red text */
+    border: none;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-inline-btn:hover {
+    background: #fecaca;
+    transform: scale(1.1);
+}
+
+.delete-btn {
+    background: var(--bs-primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Ensure Icons and Text Align Perfectly */
+.btn i {
+    line-height: 1;
+    font-size: 1.1rem;
+}
+
+/* Match the soft red style for table deletes */
+.btn-outline-danger.border-0:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Ensure solid buttons use your custom border-radius */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.app-icon {
+    width: 70px; /* Adjust size as needed, for example 32px or 48px */
+    height: auto; /* Maintains the aspect ratio */
+}
