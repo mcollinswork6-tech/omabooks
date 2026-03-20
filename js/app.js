@@ -24,6 +24,7 @@ let transUnsubscribe;
 let vaultUnsubscribe;
 let assetUnsubscribe;
 let invoiceUnsubscribe;
+let customerUnsubscribe;
 
 // --- AUTHENTICATION ---
 onAuthStateChanged(auth, (user) => {
@@ -44,12 +45,14 @@ onAuthStateChanged(auth, (user) => {
 
         assetUnsubscribe = startAssetTracker(user.uid);
         invoiceUnsubscribe = startInvoiceTracker(user.uid);
+        customerUnsubscribe = startCustomerTracker(user.uid);
     } else {
         // Stop listeners on logout to prevent permission errors
         if (transUnsubscribe) transUnsubscribe();
         if (vaultUnsubscribe) vaultUnsubscribe();
         if (assetUnsubscribe) assetUnsubscribe();
         if (invoiceUnsubscribe) invoiceUnsubscribe();
+        if (customerUnsubscribe) customerUnsubscribe();
 
         authContainer.classList.replace('d-none', 'd-flex');
         appContent.style.display = 'none';
@@ -778,32 +781,7 @@ window.editInvoice = async (id) => {
     }
 };
 
-window.emailInvoice = async (id) => {
-    try {
-        const docRef = doc(db, 'invoices', id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const subject = encodeURIComponent(`Invoice from OmaBooks - ${data.client}`);
-            const body = encodeURIComponent(
-`Hi ${data.client},
 
-Please find the details of your invoice below:
-
-Description: ${data.description}
-Amount Due: $${Number(data.amount).toFixed(2)}
-Due Date: ${data.dueDate}
-Status: ${data.status}
-
-Thank you for your business!
-OmaBooks`
-            );
-            window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        }
-    } catch (err) {
-        console.error("Error emailing invoice:", err);
-    }
-};
 
 window.toggleInvoiceStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === 'Pending' ? 'Paid' : 'Pending';
@@ -821,3 +799,132 @@ window.deleteInvoice = async (id) => {
         await deleteDoc(doc(db, 'invoices', id));
     }
 };
+
+// --- CUSTOMERS ---
+
+window.saveCustomer = async () => {
+    const idInput = document.getElementById('customer-id');
+    const nameInput = document.getElementById('cust-name');
+    const emailInput = document.getElementById('cust-email');
+    const phoneInput = document.getElementById('cust-phone');
+    const streetInput = document.getElementById('cust-street');
+    const stateInput = document.getElementById('cust-state');
+    const zipInput = document.getElementById('cust-zip');
+    const btn = document.querySelector('[onclick="event.preventDefault(); saveCustomer();"]');
+
+    if (!nameInput.value) return alert("Customer Name is required.");
+
+    try {
+        if (btn) { btn.disabled = true; btn.innerText = "Saving..."; }
+        
+        const customerData = {
+            name: nameInput.value,
+            email: emailInput.value,
+            phone: phoneInput.value,
+            street: streetInput.value,
+            state: stateInput.value,
+            zip: zipInput.value,
+            userId: auth.currentUser.uid,
+            updatedAt: new Date()
+        };
+
+        if (idInput.value) {
+            await updateDoc(doc(db, 'customers', idInput.value), customerData);
+        } else {
+            customerData.createdAt = new Date();
+            await addDoc(collection(db, 'customers'), customerData);
+        }
+
+        window.resetCustomerForm();
+    } catch (err) {
+        alert("Error saving customer: " + err.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = "Save Customer"; }
+    }
+};
+
+window.resetCustomerForm = () => {
+    document.getElementById('customer-id').value = "";
+    document.getElementById('cust-name').value = "";
+    document.getElementById('cust-email').value = "";
+    document.getElementById('cust-phone').value = "";
+    document.getElementById('cust-street').value = "";
+    document.getElementById('cust-state').value = "";
+    document.getElementById('cust-zip').value = "";
+    
+    document.getElementById('cancel-cust-btn').style.display = 'none';
+    const btn = document.querySelector('[onclick="event.preventDefault(); saveCustomer();"]');
+    if(btn) btn.innerText = "Save Customer";
+    
+    const panel = document.getElementById('customers-pane');
+    if(panel) panel.querySelector('h3').innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Add New Customer';
+};
+
+window.editCustomer = async (id) => {
+    try {
+        const docSnap = await getDoc(doc(db, 'customers', id));
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            document.getElementById('customer-id').value = id;
+            document.getElementById('cust-name').value = data.name || "";
+            document.getElementById('cust-email').value = data.email || "";
+            document.getElementById('cust-phone').value = data.phone || "";
+            document.getElementById('cust-street').value = data.street || "";
+            document.getElementById('cust-state').value = data.state || "";
+            document.getElementById('cust-zip').value = data.zip || "";
+            
+            document.getElementById('cancel-cust-btn').style.display = 'inline-block';
+            const btn = document.querySelector('[onclick="event.preventDefault(); saveCustomer();"]');
+            if(btn) btn.innerText = "Update Customer";
+            
+            const panel = document.getElementById('customers-pane');
+            if(panel) {
+                panel.querySelector('h3').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Edit Customer Details';
+                panel.scrollIntoView({behavior: "smooth"});
+            }
+        }
+    } catch (err) {
+        console.error("Error fetching customer:", err);
+    }
+};
+
+window.deleteCustomer = async (id) => {
+    if (confirm("Are you sure you want to permanently delete this customer's record?")) {
+        await deleteDoc(doc(db, 'customers', id));
+    }
+};
+
+function startCustomerTracker(uid) {
+    const q = query(collection(db, 'customers'), where("userId", "==", uid));
+    const list = document.getElementById('customer-list');
+
+    return onSnapshot(q, (snapshot) => {
+        if (!list) return;
+        
+        let customers = [];
+        snapshot.forEach(docSnap => customers.push({ id: docSnap.id, ...docSnap.data() }));
+        
+        customers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+        list.innerHTML = "";
+        customers.forEach((data) => {
+            list.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-dark">${data.name}</td>
+                    <td>
+                        <div class="small"><i class="bi bi-envelope me-1 text-muted"></i> ${data.email || '--'}</div>
+                        <div class="small mt-1"><i class="bi bi-telephone me-1 text-muted"></i> ${data.phone || '--'}</div>
+                    </td>
+                    <td><small class="text-muted">${data.street || ''}${data.state ? ', ' + data.state : ''}${data.zip ? ' ' + data.zip : ''}</small></td>
+                    <td class="text-end">
+                        <button onclick="editCustomer('${data.id}')" class="btn btn-sm btn-outline-secondary border-0 me-1" title="Edit Customer">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button onclick="deleteCustomer('${data.id}')" class="btn btn-sm btn-outline-danger border-0" title="Delete Customer">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+        });
+    });
+}

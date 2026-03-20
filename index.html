@@ -54,7 +54,10 @@
                     <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio-pane" type="button" role="tab" aria-controls="portfolio-pane" aria-selected="false">Portfolio</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-pill px-4 fw-bold" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices-pane" type="button" role="tab" aria-controls="invoices-pane" aria-selected="false">Invoices</button>
+                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices-pane" type="button" role="tab" aria-controls="invoices-pane" aria-selected="false">Invoices</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4 fw-bold" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers-pane" type="button" role="tab" aria-controls="customers-pane" aria-selected="false">Customers</button>
                 </li>
             </ul>
 
@@ -217,6 +220,67 @@
                             </div>
 
                             <div class="row g-3" id="asset-grid">
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- CUSTOMERS PANE -->
+                <div class="tab-pane fade" id="customers-pane" role="tabpanel" aria-labelledby="customers-tab" tabindex="0">
+                    <section class="py-4">
+                        <div class="card p-4 border-0 shadow-sm mb-4">
+                            <h3 class="fw-bold mb-4 text-primary"><i class="bi bi-person-plus-fill me-2"></i>Add New Customer</h3>
+                            <form onsubmit="event.preventDefault(); saveCustomer();">
+                                <input type="hidden" id="customer-id">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small fw-bold">Full Name / Company</label>
+                                        <input type="text" class="form-control border-light shadow-sm" id="cust-name" required placeholder="John Doe">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small fw-bold">Email Address</label>
+                                        <input type="email" class="form-control border-light shadow-sm" id="cust-email" placeholder="john@example.com">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small fw-bold">Phone Number</label>
+                                        <input type="tel" class="form-control border-light shadow-sm" id="cust-phone" placeholder="(555) 123-4567">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small fw-bold">Street Address</label>
+                                        <input type="text" class="form-control border-light shadow-sm" id="cust-street" placeholder="123 Main St">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small fw-bold">State</label>
+                                        <input type="text" class="form-control border-light shadow-sm" id="cust-state" placeholder="State">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small fw-bold">Zip Code</label>
+                                        <input type="text" class="form-control border-light shadow-sm" id="cust-zip" placeholder="Zip Code">
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill shadow-sm">Save Customer</button>
+                                    <button type="button" class="btn btn-light px-4 fw-bold ms-2 rounded-pill shadow-sm border" onclick="resetCustomerForm()" style="display: none;" id="cancel-cust-btn">Cancel Edit</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="card p-4 border-0 shadow-sm">
+                            <h3 class="fw-bold mb-4 text-primary"><i class="bi bi-people-fill me-2"></i>Client Directory</h3>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light text-muted small fw-bold">
+                                        <tr>
+                                            <th>NAME / COMPANY</th>
+                                            <th>CONTACT INFO</th>
+                                            <th>ADDRESS</th>
+                                            <th class="text-end">ACTIONS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="customer-list">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </section>
