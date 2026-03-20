@@ -456,6 +456,8 @@ window.saveInvoiceData = async () => {
         idInput.value = "";
         clientInput.value = "";
         dueInput.value = "";
+        const custSelect = document.getElementById('invoice-customer-select');
+        if(custSelect) custSelect.value = "";
         const container = document.getElementById('invoice-items-container');
         if(container) container.innerHTML = "";
         window.addInvoiceLineItem();
@@ -897,6 +899,7 @@ window.deleteCustomer = async (id) => {
 function startCustomerTracker(uid) {
     const q = query(collection(db, 'customers'), where("userId", "==", uid));
     const list = document.getElementById('customer-list');
+    const select = document.getElementById('invoice-customer-select');
 
     return onSnapshot(q, (snapshot) => {
         if (!list) return;
@@ -905,6 +908,18 @@ function startCustomerTracker(uid) {
         snapshot.forEach(docSnap => customers.push({ id: docSnap.id, ...docSnap.data() }));
         
         customers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+        if (select) {
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Custom Client --</option>';
+            customers.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.name;
+                opt.textContent = c.name;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        }
 
         list.innerHTML = "";
         customers.forEach((data) => {

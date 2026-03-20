@@ -300,11 +300,15 @@
                             
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-bold">Select Existing Customer</label>
+                                    <select id="invoice-customer-select" class="form-select border-light shadow-sm mb-2" onchange="if(this.value) document.getElementById('invoice-client').value = this.value;">
+                                        <option value="">-- Custom Client --</option>
+                                    </select>
                                     <input type="text" id="invoice-client" class="form-control border-light shadow-sm" placeholder="Client Name">
                                 </div>
                                 <div class="col-md-6">
-                                    <input type="date" id="invoice-due" class="form-control border-light shadow-sm" title="Due Date">
-                                    <small class="text-muted d-block mt-1 pt-1 border-top ms-1">Due Date</small>
+                                    <label class="form-label text-muted small fw-bold">Due Date</label>
+                                    <input type="date" id="invoice-due" class="form-control border-light shadow-sm">
                                 </div>
                             </div>
 
