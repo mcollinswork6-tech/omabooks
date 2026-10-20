@@ -1422,12 +1422,39 @@ function renderPortfolioUI() {
     const netEl = document.getElementById('portfolio-total-net');
     if (netEl) netEl.innerText = `${netPortfolio < 0 ? '-' : ''}$${Math.abs(netPortfolio).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-    if (filteredAssets.length === 0) {
+    if (cachedAssets.length === 0) {
         if (tableBody) {
-            tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-muted">No assets found. Click "+ New Asset / Property" above to add one.</td></tr>`;
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <div class="p-4 bg-light rounded-3 border d-inline-block text-center shadow-sm" style="max-width: 580px;">
+                            <i class="bi bi-wallet2 text-primary fs-1 mb-2 d-block"></i>
+                            <h5 class="fw-bold mb-1">Portfolio Is Empty</h5>
+                            <p class="text-muted small mb-3">Initialize all 29 identified real estate properties, heavy equipment, and vehicles from the Lambda West, Inc. QuickBooks balance sheet and P&L.</p>
+                            <button onclick="window.seedLambdaWestAssets()" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
+                                <i class="bi bi-cloud-arrow-down-fill me-1"></i> Import All 29 Identified Assets
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
         }
         if (cardsContainer) {
-            cardsContainer.innerHTML = `<div class="col-12 text-center py-5 text-muted">No assets in this category.</div>`;
+            cardsContainer.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <button onclick="window.seedLambdaWestAssets()" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
+                        <i class="bi bi-cloud-arrow-down-fill me-1"></i> Import All 29 Identified Assets
+                    </button>
+                </div>`;
+        }
+        return;
+    }
+
+    if (filteredAssets.length === 0) {
+        if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-muted">No assets found in category: <strong>${catFilter}</strong>.</td></tr>`;
+        }
+        if (cardsContainer) {
+            cardsContainer.innerHTML = `<div class="col-12 text-center py-5 text-muted">No assets in category: <strong>${catFilter}</strong>.</div>`;
         }
         return;
     }
@@ -1773,6 +1800,96 @@ window.printCurrentAssetLedger = () => {
 window.deleteAsset = async (id) => {
     if (confirm("Remove this asset from your portfolio?")) {
         await deleteDoc(doc(db, 'assets', id));
+    }
+};
+
+// --- IDENTIFIED ASSETS SEED DATA (LAMBDA WEST, INC.) ---
+const IDENTIFIED_LAMBDA_WEST_ASSETS = [
+    // Real Estate Properties (Account Codes 1505 - 1570)
+    { name: "816 Yolo St", category: "Real Estate", value: 347083.77, accountCode: "1505", purchaseDate: "2020-01-01", description: "Real Estate Property with $29,000 accum. depreciation ($376,083.77 asset cost)" },
+    { name: "Ponderosa Trailer Park", category: "Real Estate", value: 217234.69, accountCode: "1535", purchaseDate: "2018-05-15", description: "Original Cost $326,850.00 less $98,076.91 accum. depreciation" },
+    { name: "Narrow Way House", category: "Real Estate", value: 249370.01, accountCode: "1561", purchaseDate: "2021-03-10", description: "Asset $272,274.01 less $22,904.00 accum. depreciation" },
+    { name: "Land, Pine Creek", category: "Land", value: 91512.60, accountCode: "1550", purchaseDate: "2019-06-20", description: "Pine Creek Land parcel" },
+    { name: "222 MacDonald Lane", category: "Real Estate", value: 75507.42, accountCode: "1560", purchaseDate: "2020-09-01", description: "MacDonald Lane Rental Property" },
+    { name: "Ivie 5 acres lot 1", category: "Land", value: 32587.33, accountCode: "1565", purchaseDate: "2021-11-15", description: "Ivie 5 acres land parcel Lot 1" },
+    { name: "Ponderosa Major Repair 2023", category: "Real Estate", value: 8794.02, accountCode: "1551", purchaseDate: "2023-01-15", description: "Capitalized Property Improvement" },
+    { name: "Cabin", category: "Real Estate", value: 35000.00, accountCode: "1570", purchaseDate: "2022-04-10", description: "Cabin Rental Property" },
+
+    // Vehicles & Heavy Equipment (Account Codes 1610 - 1710)
+    { name: "Dodge Pickup 2001", category: "Vehicle", value: 5684.00, accountCode: "1642", purchaseDate: "2021-02-14", description: "Company Work Vehicle" },
+    { name: "Dodge Pickup", category: "Vehicle", value: 4905.10, accountCode: "1640", purchaseDate: "2022-07-10", description: "Company Work Vehicle" },
+    { name: "Box Trailer", category: "Vehicle", value: 4721.62, accountCode: "1689", purchaseDate: "2023-03-01", description: "Enclosed Box Trailer" },
+    { name: "Yamaha YXZ10", category: "Vehicle", value: 4177.59, accountCode: "1696", purchaseDate: "2023-08-15", description: "Utility Vehicle" },
+    { name: "Prevost 1985 Bus", category: "Vehicle", value: 3500.00, accountCode: "1693", purchaseDate: "2020-10-05", description: "1985 Passenger Bus" },
+    { name: "Kubota Tractor", category: "Equipment", value: 2300.00, accountCode: "1631", purchaseDate: "2021-04-12", description: "Farm / Utility Tractor" },
+    { name: "John Deere Dozer 450", category: "Equipment", value: 1000.00, accountCode: "1632", purchaseDate: "2019-08-20", description: "450 Bulldozer" },
+    { name: "John Deere Cat 450C", category: "Equipment", value: 1000.00, accountCode: "1635", purchaseDate: "2019-09-10", description: "Cat 450C Equipment" },
+    { name: "Can Am Commander", category: "Vehicle", value: 1000.00, accountCode: "1625", purchaseDate: "2022-01-18", description: "Utility Side-by-Side" },
+    { name: "Dump Trailer", category: "Vehicle", value: 1000.00, accountCode: "1612", purchaseDate: "2021-06-30", description: "Heavy Duty Dump Trailer" },
+    { name: "Dump Truck", category: "Vehicle", value: 1000.00, accountCode: "1650", purchaseDate: "2020-03-25", description: "Commercial Dump Truck" },
+    { name: "Sequoia Mill", category: "Equipment", value: 1000.00, accountCode: "1694", purchaseDate: "2022-11-05", description: "Sawmill Equipment" },
+    { name: "Road Grader #2", category: "Equipment", value: 1000.00, accountCode: "1710", purchaseDate: "2020-05-18", description: "Heavy Road Grader Equipment" },
+    { name: "Suzuki LTZ 400", category: "Vehicle", value: 1000.63, accountCode: "1695", purchaseDate: "2022-09-12", description: "All-Terrain Vehicle" },
+    { name: "Eager Beaver Trailer", category: "Vehicle", value: 800.00, accountCode: "1633", purchaseDate: "2021-08-01", description: "Equipment Hauler Trailer" },
+    { name: "Honda 700", category: "Vehicle", value: 753.27, accountCode: "1692", purchaseDate: "2023-05-10", description: "Utility Vehicle" },
+    { name: "Hicory Sheds", category: "Equipment", value: 500.00, accountCode: "1691", purchaseDate: "2022-12-01", description: "Storage Sheds" },
+    { name: "Husqvarna Lawn Tractor, 2005", category: "Equipment", value: 300.00, accountCode: "1610", purchaseDate: "2020-06-01", description: "2005 Riding Lawn Tractor" },
+
+    // Notes Receivable / Current Assets (Account Codes 1256 - 1260)
+    { name: "Horizons Unlimited, Inc. - Note Receivable", category: "Notes Receivable", value: 40000.00, accountCode: "1260", purchaseDate: "2024-01-01", description: "Current Note Receivable from Horizons Unlimited, Inc." },
+    { name: "Harold Holmes - Note Receivable", category: "Notes Receivable", value: 10716.06, accountCode: "1256", purchaseDate: "2024-01-01", description: "Current Note Receivable from Harold Holmes" },
+    { name: "Yaroslav Nikolaychuk - Note Receivable", category: "Notes Receivable", value: 8090.40, accountCode: "1257", purchaseDate: "2024-01-01", description: "Current Note Receivable from Yaroslav Nikolaychuk" }
+];
+
+window.seedLambdaWestAssets = async () => {
+    if (!auth.currentUser) {
+        return alert("Please log in to your account first so your assets can be saved to your company.");
+    }
+
+    const btn = document.getElementById('btn-seed-assets');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Importing...`;
+    }
+
+    try {
+        const existingNames = new Set(cachedAssets.map(a => (a.name || '').trim().toLowerCase()));
+        const toAdd = IDENTIFIED_LAMBDA_WEST_ASSETS.filter(a => !existingNames.has(a.name.trim().toLowerCase()));
+
+        if (toAdd.length === 0) {
+            alert("All 29 identified Lambda West assets already exist in your portfolio!");
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+            return;
+        }
+
+        let count = 0;
+        for (const item of toAdd) {
+            await addDoc(collection(db, 'assets'), {
+                name: item.name,
+                category: item.category,
+                value: item.value,
+                accountCode: item.accountCode,
+                purchaseDate: item.purchaseDate,
+                description: item.description || '',
+                userId: auth.currentUser.uid,
+                createdAt: new Date()
+            });
+            count++;
+        }
+
+        alert(`Successfully created and saved ${count} identified asset entities into your company portfolio!`);
+    } catch (err) {
+        console.error("Error importing assets:", err);
+        alert("Error importing assets: " + err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
     }
 };
 
