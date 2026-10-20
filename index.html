@@ -38,11 +38,40 @@
                         <h2 class="fw-bold mb-0 lh-1">OmaBooks</h2>
                         <small class="text-muted d-block mt-1">QuickBooks Edition</small>
                     </div>
-                    <span class="badge bg-light text-dark border px-3 py-2 ms-4 d-none d-md-inline-flex align-items-center" id="company-name-badge" role="button" onclick="window.openCompanyModal()" title="Click to edit Company Settings">
-                        <i class="bi bi-building me-2 text-primary"></i>
-                        <span id="nav-company-name" class="fw-bold">Lambda West, Inc.</span>
-                        <i class="bi bi-gear ms-2 text-muted"></i>
-                    </span>
+                    <!-- Entity Switcher Dropdown (Multi-Company) -->
+                    <div class="dropdown ms-4 d-none d-md-inline-block">
+                        <button class="btn btn-outline-dark btn-sm rounded-pill px-3 py-2 dropdown-toggle d-flex align-items-center gap-2 shadow-sm" type="button" id="entityDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-building text-primary"></i>
+                            <span id="nav-company-name" class="fw-bold">Lambda West, Inc.</span>
+                        </button>
+                        <ul class="dropdown-menu shadow border-0" aria-labelledby="entityDropdown" id="company-dropdown-menu" style="min-width: 280px;">
+                            <li><h6 class="dropdown-header text-uppercase small text-muted">Switch Active Entity</h6></li>
+                            <li>
+                                <a class="dropdown-item d-flex justify-content-between align-items-center py-2" href="javascript:void(0)" onclick="window.switchCompany('Lambda West, Inc.')">
+                                    <div>
+                                        <div class="fw-bold text-dark"><i class="bi bi-briefcase me-1 text-primary"></i>Lambda West, Inc.</div>
+                                        <small class="text-muted">Operating Corporation</small>
+                                    </div>
+                                    <span class="badge bg-primary ms-2" id="badge-active-lambda">Active</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex justify-content-between align-items-center py-2" href="javascript:void(0)" onclick="window.switchCompany('John & Diana Living Trust')">
+                                    <div>
+                                        <div class="fw-bold text-dark"><i class="bi bi-shield-check me-1 text-success"></i>John & Diana Living Trust</div>
+                                        <small class="text-muted">Family Living Trust</small>
+                                    </div>
+                                    <span class="badge bg-primary ms-2 d-none" id="badge-active-trust">Active</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item small text-primary fw-bold" href="javascript:void(0)" onclick="window.openCompanyModal()">
+                                    <i class="bi bi-gear-fill me-1"></i> Manage Entities / Settings
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="window.openCompanyModal()">
@@ -107,6 +136,15 @@
                                     <i class="bi bi-check2-circle text-success me-1"></i> Accrual Basis
                                 </span>
                             </div>
+                        </div>
+
+                        <!-- Active Entity Indicator Banner -->
+                        <div class="d-flex align-items-center justify-content-between p-2 px-3 bg-light rounded-3 border mb-3 flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="small fw-bold text-muted text-uppercase"><i class="bi bi-building me-1 text-primary"></i>Active Reporting Entity:</span>
+                                <span class="badge bg-primary fs-6 px-3 py-1" id="report-entity-badge">Lambda West, Inc.</span>
+                            </div>
+                            <small class="text-muted"><i class="bi bi-arrow-left-right me-1 text-primary"></i>Use the entity dropdown in the top navbar to switch between Lambda West, Inc. and John & Diana Living Trust.</small>
                         </div>
 
                         <!-- Date Preset Buttons -->
@@ -303,6 +341,13 @@
                                     </select>
                                     <input type="hidden" id="trans-type" value="income">
                                 </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted">Company / Entity</label>
+                                    <select id="trans-company" class="form-select fw-semibold">
+                                        <option value="Lambda West, Inc.">Lambda West, Inc.</option>
+                                        <option value="John & Diana Living Trust">John & Diana Living Trust</option>
+                                    </select>
+                                </div>
                                 <div class="col-md-2 d-flex align-items-end">
                                     <button onclick="saveData()" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
                                         <i class="bi bi-save me-1"></i> Save Entry
@@ -321,19 +366,27 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3">
+                                    <select id="trans-company-filter" class="form-select form-select-sm fw-semibold" onchange="window.applyTransactionFilters && window.applyTransactionFilters()">
+                                        <option value="ACTIVE">Current Entity Only</option>
+                                        <option value="ALL">All Entities (Consolidated)</option>
+                                        <option value="Lambda West, Inc.">Lambda West, Inc.</option>
+                                        <option value="John & Diana Living Trust">John & Diana Living Trust</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
                                     <select id="trans-asset-filter" class="form-select form-select-sm" onchange="window.applyTransactionFilters && window.applyTransactionFilters()">
                                         <option value="ALL">All Assets / Properties</option>
                                         <!-- populated dynamically -->
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <select id="trans-type-filter" class="form-select form-select-sm" onchange="window.applyTransactionFilters && window.applyTransactionFilters()">
-                                        <option value="ALL">All Flows (Debits & Credits)</option>
+                                        <option value="ALL">All Flows (DR & CR)</option>
                                         <option value="debit">Debits (DR) Only</option>
                                         <option value="credit">Credits (CR) Only</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 text-end">
+                                <div class="col-md-2 text-end">
                                     <span class="small text-muted" id="trans-count-display">Showing all entries</span>
                                 </div>
                             </div>
@@ -487,9 +540,16 @@
                                         <label class="form-label small fw-bold text-muted">Cost Basis / Value ($)</label>
                                         <input type="number" id="asset-value" class="form-control" placeholder="Purchase Price" step="0.01">
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <label class="form-label small fw-bold text-muted">Acquisition Date</label>
                                         <input type="date" id="asset-date" class="form-control">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold text-muted">Company / Entity</label>
+                                        <select id="asset-company-select" class="form-select fw-semibold">
+                                            <option value="Lambda West, Inc.">Lambda West, Inc.</option>
+                                            <option value="John & Diana Living Trust">John & Diana Living Trust</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
                                         <button onclick="addAsset()" class="btn btn-dark w-100 py-2 fw-bold shadow-sm">
@@ -511,17 +571,28 @@
                                         <i class="bi bi-grid-fill me-1"></i> Cards View
                                     </button>
                                 </div>
-                                <div class="d-flex gap-2 align-items-center">
-                                    <label class="small text-muted fw-bold mb-0">Category:</label>
-                                    <select id="portfolio-category-filter" class="form-select form-select-sm" style="width: auto;" onchange="window.filterPortfolio && window.filterPortfolio()">
-                                        <option value="ALL">All Categories</option>
-                                        <option value="Real Estate">Real Estate</option>
-                                        <option value="Land">Land</option>
-                                        <option value="Vehicle">Vehicle</option>
-                                        <option value="Equipment">Equipment</option>
-                                        <option value="Notes Receivable">Notes Receivable</option>
-                                        <option value="Inventory">Inventory</option>
-                                    </select>
+                                <div class="d-flex gap-2 align-items-center flex-wrap">
+                                    <div class="d-flex gap-1 align-items-center">
+                                        <label class="small text-muted fw-bold mb-0">Entity:</label>
+                                        <select id="portfolio-company-filter" class="form-select form-select-sm fw-semibold" style="width: auto;" onchange="window.filterPortfolio && window.filterPortfolio()">
+                                            <option value="ACTIVE">Current Entity Only</option>
+                                            <option value="ALL">All Entities</option>
+                                            <option value="Lambda West, Inc.">Lambda West, Inc.</option>
+                                            <option value="John & Diana Living Trust">John & Diana Living Trust</option>
+                                        </select>
+                                    </div>
+                                    <div class="d-flex gap-1 align-items-center">
+                                        <label class="small text-muted fw-bold mb-0">Category:</label>
+                                        <select id="portfolio-category-filter" class="form-select form-select-sm" style="width: auto;" onchange="window.filterPortfolio && window.filterPortfolio()">
+                                            <option value="ALL">All Categories</option>
+                                            <option value="Real Estate">Real Estate</option>
+                                            <option value="Land">Land</option>
+                                            <option value="Vehicle">Vehicle</option>
+                                            <option value="Equipment">Equipment</option>
+                                            <option value="Notes Receivable">Notes Receivable</option>
+                                            <option value="Inventory">Inventory</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -933,16 +1004,36 @@
                     </div>
                     <div class="modal-body p-4">
                         <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Select Entity to Configure</label>
+                            <select id="company-entity-select" class="form-select fw-bold" onchange="window.handleCompanyModalSelect(this.value)">
+                                <option value="Lambda West, Inc.">Lambda West, Inc. (Corporation)</option>
+                                <option value="John & Diana Living Trust">John & Diana Living Trust (Living Trust)</option>
+                                <option value="__NEW__">+ Add Another Entity / Company...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label small fw-bold text-muted mb-1">Company / Entity Legal Name</label>
                             <input type="text" id="company-name-input" class="form-control" placeholder="e.g. Lambda West, Inc.">
                             <small class="text-muted">Appears at top of QuickBooks Profit & Loss and tax reports.</small>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-muted mb-1">Default Accounting Method</label>
-                            <select id="company-default-basis" class="form-select">
-                                <option value="Accrual Basis" selected>Accrual Basis</option>
-                                <option value="Cash Basis">Cash Basis</option>
-                            </select>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Entity Structure</label>
+                                <select id="company-entity-type" class="form-select">
+                                    <option value="Corporation">Corporation (Inc / C-Corp / S-Corp)</option>
+                                    <option value="Living Trust">Living Trust (Family / Asset Trust)</option>
+                                    <option value="LLC">Limited Liability Company (LLC)</option>
+                                    <option value="Partnership">Partnership</option>
+                                    <option value="Sole Proprietorship">Sole Proprietorship</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Accounting Method</label>
+                                <select id="company-default-basis" class="form-select">
+                                    <option value="Accrual Basis" selected>Accrual Basis</option>
+                                    <option value="Cash Basis">Cash Basis</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-muted mb-1">Fiscal Year End</label>
@@ -972,6 +1063,13 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4 bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 px-3 bg-white rounded-3 border">
+                            <span class="small fw-bold text-muted"><i class="bi bi-building text-primary me-1"></i>Configuring Balances For:</span>
+                            <select id="bs-setup-entity-select" class="form-select form-select-sm fw-bold w-auto" onchange="window.handleBalanceSheetModalEntityChange(this.value)">
+                                <option value="Lambda West, Inc.">Lambda West, Inc.</option>
+                                <option value="John & Diana Living Trust">John & Diana Living Trust</option>
+                            </select>
+                        </div>
                         <p class="small text-muted mb-3">These account balances automatically flow into your official <strong>QuickBooks Balance Sheet</strong> statement (Assets = Liabilities + Equity).</p>
                         
                         <div class="card p-3 mb-3 border-0 shadow-sm">

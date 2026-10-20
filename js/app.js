@@ -32,24 +32,86 @@ let cachedTransactions = [];
 let cachedCustomers = [];
 let currentActiveLedgerAsset = null;
 let currentPortfolioView = 'ledger';
-let companyProfile = {
-    name: "Lambda West, Inc.",
-    defaultBasis: "Accrual Basis",
-    fiscalYear: "December 31"
+let currentCompany = "Lambda West, Inc.";
+let companiesList = ["Lambda West, Inc.", "John & Diana Living Trust"];
+
+let companyProfiles = {
+    "Lambda West, Inc.": {
+        name: "Lambda West, Inc.",
+        type: "Corporation",
+        defaultBasis: "Accrual Basis",
+        fiscalYear: "December 31"
+    },
+    "John & Diana Living Trust": {
+        name: "John & Diana Living Trust",
+        type: "Living Trust",
+        defaultBasis: "Accrual Basis",
+        fiscalYear: "December 31"
+    }
 };
 
-// Balance Sheet Accounts State (Matching Lambda West, Inc. Balance Sheet)
-let balanceSheetAccounts = {
-    pettyCash: -1566.97,
-    stcu: 27977.23,
-    holmes: 10716.06,
-    yaroslav: 8090.40,
-    horizons: 40000.00,
-    balserJanet: 197000.00,
-    balserRob: 140000.00,
-    openingEquity: -68420.19,
-    retainedEarnings: 881682.54
+let balanceSheetAccountsByCompany = {
+    "Lambda West, Inc.": {
+        pettyCash: -1566.97,
+        stcu: 27977.23,
+        holmes: 10716.06,
+        yaroslav: 8090.40,
+        horizons: 40000.00,
+        balserJanet: 197000.00,
+        balserRob: 140000.00,
+        openingEquity: -68420.19,
+        retainedEarnings: 881682.54
+    },
+    "John & Diana Living Trust": {
+        pettyCash: 0.00,
+        stcu: 0.00,
+        holmes: 0.00,
+        yaroslav: 0.00,
+        horizons: 0.00,
+        balserJanet: 0.00,
+        balserRob: 0.00,
+        openingEquity: 0.00,
+        retainedEarnings: 0.00
+    }
 };
+
+function getActiveBalanceSheetAccounts() {
+    if (!balanceSheetAccountsByCompany[currentCompany]) {
+        balanceSheetAccountsByCompany[currentCompany] = {
+            stcu: 0, pettyCash: 0, horizons: 0, holmes: 0, yaroslav: 0,
+            balserJanet: 0, balserRob: 0, openingEquity: 0, retainedEarnings: 0
+        };
+    }
+    return balanceSheetAccountsByCompany[currentCompany];
+}
+
+let balanceSheetAccounts = new Proxy({}, {
+    get: (target, prop) => getActiveBalanceSheetAccounts()[prop],
+    set: (target, prop, val) => {
+        getActiveBalanceSheetAccounts()[prop] = val;
+        return true;
+    }
+});
+
+function getActiveCompanyProfile() {
+    if (!companyProfiles[currentCompany]) {
+        companyProfiles[currentCompany] = {
+            name: currentCompany,
+            type: "Corporation",
+            defaultBasis: "Accrual Basis",
+            fiscalYear: "December 31"
+        };
+    }
+    return companyProfiles[currentCompany];
+}
+
+let companyProfile = new Proxy({}, {
+    get: (target, prop) => getActiveCompanyProfile()[prop],
+    set: (target, prop, val) => {
+        getActiveCompanyProfile()[prop] = val;
+        return true;
+    }
+});
 
 // --- AUTHENTICATION ---
 onAuthStateChanged(auth, async (user) => {
@@ -104,25 +166,39 @@ window.handleLogin = (event) => {
 
 window.logout = () => signOut(auth);
 
-// --- COMPANY SETTINGS ---
+// --- MULTI-COMPANY & ENTITY SETTINGS ---
 async function loadCompanySettings(uid) {
     try {
-        const savedLocal = localStorage.getItem(`omabooks_company_${uid}`);
-        if (savedLocal) {
-            companyProfile = Object.assign(companyProfile, JSON.parse(savedLocal));
+        const savedActive = localStorage.getItem(`omabooks_active_company_${uid}`);
+        if (savedActive) currentCompany = savedActive;
+
+        const savedProfiles = localStorage.getItem(`omabooks_companies_${uid}`);
+        if (savedProfiles) {
+            companyProfiles = Object.assign(companyProfiles, JSON.parse(savedProfiles));
+            companiesList = Object.keys(companyProfiles);
         }
 
-        const docRef = doc(db, 'settings', `company_${uid}`);
+        const docRef = doc(db, 'settings', `companies_${uid}`);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            companyProfile = Object.assign(companyProfile, docSnap.data());
+            const data = docSnap.data();
+            if (data.companyProfiles) companyProfiles = Object.assign(companyProfiles, data.companyProfiles);
+            if (data.companiesList) companiesList = Array.from(new Set([...companiesList, ...data.companiesList]));
+            if (data.activeCompany && !savedActive) currentCompany = data.activeCompany;
         }
     } catch (e) {
-        console.warn("Could not load remote company settings, using defaults:", e);
+        console.warn("Could not load remote companies settings, using defaults:", e);
     }
 
+    updateCompanyUI();
+}
+
+function updateCompanyUI() {
     const navName = document.getElementById('nav-company-name');
-    if (navName) navName.innerText = companyProfile.name || "Lambda West, Inc.";
+    if (navName) navName.innerText = currentCompany;
+
+    const reportEntityBadge = document.getElementById('report-entity-badge');
+    if (reportEntityBadge) reportEntityBadge.innerText = currentCompany;
 
     const basisDisplay = document.getElementById('report-basis-display');
     if (basisDisplay) {
@@ -133,14 +209,101 @@ async function loadCompanySettings(uid) {
     if (reportBasisSelect) {
         reportBasisSelect.value = companyProfile.defaultBasis || 'Accrual Basis';
     }
+
+    // Populate transaction & asset company dropdowns
+    ['trans-company', 'asset-company-select'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerHTML = "";
+            companiesList.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                el.appendChild(opt);
+            });
+            el.value = currentCompany;
+        }
+    });
+
+    // Populate filter dropdowns
+    ['trans-company-filter', 'portfolio-company-filter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const curVal = el.value || "ACTIVE";
+            el.innerHTML = `
+                <option value="ACTIVE">Current Entity Only (${currentCompany})</option>
+                <option value="ALL">All Entities (Consolidated)</option>
+            `;
+            companiesList.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                el.appendChild(opt);
+            });
+            el.value = curVal;
+        }
+    });
+
+    // Render company-dropdown-menu in navbar
+    const dropdownMenu = document.getElementById('company-dropdown-menu');
+    if (dropdownMenu) {
+        let itemsHtml = `<li><h6 class="dropdown-header text-uppercase small text-muted">Switch Active Entity</h6></li>`;
+        companiesList.forEach(c => {
+            const isActive = (c === currentCompany);
+            const prof = companyProfiles[c] || {};
+            const icon = (prof.type === 'Living Trust' || c.includes('Trust')) ? 'bi-shield-check text-success' : 'bi-briefcase text-primary';
+            itemsHtml += `
+                <li>
+                    <a class="dropdown-item d-flex justify-content-between align-items-center py-2 ${isActive ? 'bg-light' : ''}" href="javascript:void(0)" onclick="window.switchCompany('${c.replace(/'/g, "\\'")}')">
+                        <div>
+                            <div class="fw-bold text-dark"><i class="bi ${icon} me-1"></i>${c}</div>
+                            <small class="text-muted">${prof.type || 'Entity'}</small>
+                        </div>
+                        ${isActive ? '<span class="badge bg-primary ms-2">Active</span>' : ''}
+                    </a>
+                </li>`;
+        });
+        itemsHtml += `
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item small text-primary fw-bold" href="javascript:void(0)" onclick="window.openCompanyModal()">
+                    <i class="bi bi-gear-fill me-1"></i> Manage Entities / Settings
+                </a>
+            </li>`;
+        dropdownMenu.innerHTML = itemsHtml;
+    }
 }
 
-window.openCompanyModal = () => {
-    document.getElementById('company-name-input').value = companyProfile.name || "Lambda West, Inc.";
-    document.getElementById('company-default-basis').value = companyProfile.defaultBasis || "Accrual Basis";
-    document.getElementById('company-fiscal-year').value = companyProfile.fiscalYear || "December 31";
+window.switchCompany = (compName) => {
+    if (!compName) return;
+    currentCompany = compName;
+    if (auth.currentUser) {
+        localStorage.setItem(`omabooks_active_company_${auth.currentUser.uid}`, currentCompany);
+    }
+    updateCompanyUI();
+    if (window.applyTransactionFilters) window.applyTransactionFilters();
+    if (window.renderPortfolioUI) window.renderPortfolioUI();
+};
 
-    // @ts-ignore
+window.openCompanyModal = () => {
+    const selectEl = document.getElementById('company-entity-select');
+    if (selectEl) {
+        selectEl.innerHTML = "";
+        companiesList.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = `${c} (${(companyProfiles[c] && companyProfiles[c].type) || 'Entity'})`;
+            selectEl.appendChild(opt);
+        });
+        const addOpt = document.createElement('option');
+        addOpt.value = "__NEW__";
+        addOpt.textContent = "+ Add Another Entity / Company...";
+        selectEl.appendChild(addOpt);
+        selectEl.value = currentCompany;
+    }
+
+    window.handleCompanyModalSelect(currentCompany);
+
     const modalEl = document.getElementById('companySettingsModal');
     if (modalEl && window.bootstrap) {
         const modal = new bootstrap.Modal(modalEl);
@@ -148,68 +311,105 @@ window.openCompanyModal = () => {
     }
 };
 
-window.saveCompanySettings = async () => {
-    const name = document.getElementById('company-name-input').value.trim() || "Lambda West, Inc.";
-    const defaultBasis = document.getElementById('company-default-basis').value;
-    const fiscalYear = document.getElementById('company-fiscal-year').value.trim() || "December 31";
+window.handleCompanyModalSelect = (val) => {
+    const nameInput = document.getElementById('company-name-input');
+    const typeSelect = document.getElementById('company-entity-type');
+    const basisSelect = document.getElementById('company-default-basis');
+    const fiscalInput = document.getElementById('company-fiscal-year');
 
-    companyProfile = { name, defaultBasis, fiscalYear };
+    if (val === '__NEW__') {
+        if (nameInput) nameInput.value = "";
+        if (typeSelect) typeSelect.value = "LLC";
+        if (basisSelect) basisSelect.value = "Accrual Basis";
+        if (fiscalInput) fiscalInput.value = "December 31";
+        if (nameInput) nameInput.focus();
+        return;
+    }
+
+    const prof = companyProfiles[val] || { name: val, type: "Corporation", defaultBasis: "Accrual Basis", fiscalYear: "December 31" };
+    if (nameInput) nameInput.value = prof.name || val;
+    if (typeSelect) typeSelect.value = prof.type || "Corporation";
+    if (basisSelect) basisSelect.value = prof.defaultBasis || "Accrual Basis";
+    if (fiscalInput) fiscalInput.value = prof.fiscalYear || "December 31";
+};
+
+window.saveCompanySettings = async () => {
+    const nameInput = document.getElementById('company-name-input');
+    const typeSelect = document.getElementById('company-entity-type');
+    const basisSelect = document.getElementById('company-default-basis');
+    const fiscalInput = document.getElementById('company-fiscal-year');
+
+    const name = nameInput.value.trim();
+    if (!name) return alert("Entity legal name is required.");
+
+    const type = typeSelect ? typeSelect.value : "Corporation";
+    const defaultBasis = basisSelect ? basisSelect.value : "Accrual Basis";
+    const fiscalYear = fiscalInput ? fiscalInput.value.trim() : "December 31";
+
+    companyProfiles[name] = { name, type, defaultBasis, fiscalYear };
+    if (!companiesList.includes(name)) {
+        companiesList.push(name);
+    }
+    currentCompany = name;
 
     if (auth.currentUser) {
         try {
-            localStorage.setItem(`omabooks_company_${auth.currentUser.uid}`, JSON.stringify(companyProfile));
-            await setDoc(doc(db, 'settings', `company_${auth.currentUser.uid}`), companyProfile, { merge: true });
+            localStorage.setItem(`omabooks_active_company_${auth.currentUser.uid}`, currentCompany);
+            localStorage.setItem(`omabooks_companies_${auth.currentUser.uid}`, JSON.stringify(companyProfiles));
+            await setDoc(doc(db, 'settings', `companies_${auth.currentUser.uid}`), {
+                activeCompany: currentCompany,
+                companiesList: companiesList,
+                companyProfiles: companyProfiles
+            }, { merge: true });
         } catch (e) {
-            console.error("Error saving company settings:", e);
+            console.error("Error saving company profiles:", e);
         }
     }
 
-    const navName = document.getElementById('nav-company-name');
-    if (navName) navName.innerText = name;
+    updateCompanyUI();
 
-    const basisDisplay = document.getElementById('report-basis-display');
-    if (basisDisplay) {
-        basisDisplay.innerHTML = `<i class="bi bi-check2-circle text-success me-1"></i> ${defaultBasis}`;
-    }
-
-    // @ts-ignore
     const modalEl = document.getElementById('companySettingsModal');
     if (modalEl && window.bootstrap) {
         const modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
     }
+
+    alert(`Entity "${name}" saved and set as active.`);
 };
 
 // --- BALANCE SHEET ACCOUNTS & INITIAL BALANCES ---
 async function loadBalanceSheetSettings(uid) {
     try {
-        const savedLocal = localStorage.getItem(`omabooks_bs_${uid}`);
-        if (savedLocal) {
-            balanceSheetAccounts = Object.assign(balanceSheetAccounts, JSON.parse(savedLocal));
+        const saved = localStorage.getItem(`omabooks_bs_multi_${uid}`);
+        if (saved) {
+            balanceSheetAccountsByCompany = Object.assign(balanceSheetAccountsByCompany, JSON.parse(saved));
         }
 
-        const docRef = doc(db, 'settings', `balance_sheet_${uid}`);
+        const docRef = doc(db, 'settings', `balance_sheet_multi_${uid}`);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            balanceSheetAccounts = Object.assign(balanceSheetAccounts, docSnap.data());
+            balanceSheetAccountsByCompany = Object.assign(balanceSheetAccountsByCompany, docSnap.data());
         }
     } catch (e) {
-        console.warn("Could not load remote balance sheet settings, using standard defaults:", e);
+        console.warn("Could not load remote balance sheet settings, using defaults:", e);
     }
 }
 
 window.openBalanceSheetSetupModal = () => {
-    document.getElementById('bs-stcu-balance').value = balanceSheetAccounts.stcu !== undefined ? balanceSheetAccounts.stcu : 27977.23;
-    document.getElementById('bs-petty-cash').value = balanceSheetAccounts.pettyCash !== undefined ? balanceSheetAccounts.pettyCash : -1566.97;
-    document.getElementById('bs-horizons').value = balanceSheetAccounts.horizons !== undefined ? balanceSheetAccounts.horizons : 40000.00;
-    document.getElementById('bs-holmes').value = balanceSheetAccounts.holmes !== undefined ? balanceSheetAccounts.holmes : 10716.06;
-    document.getElementById('bs-yaroslav').value = balanceSheetAccounts.yaroslav !== undefined ? balanceSheetAccounts.yaroslav : 8090.40;
-    document.getElementById('bs-balser-janet').value = balanceSheetAccounts.balserJanet !== undefined ? balanceSheetAccounts.balserJanet : 197000.00;
-    document.getElementById('bs-balser-rob').value = balanceSheetAccounts.balserRob !== undefined ? balanceSheetAccounts.balserRob : 140000.00;
-    document.getElementById('bs-opening-equity').value = balanceSheetAccounts.openingEquity !== undefined ? balanceSheetAccounts.openingEquity : -68420.19;
-    document.getElementById('bs-retained-earnings').value = balanceSheetAccounts.retainedEarnings !== undefined ? balanceSheetAccounts.retainedEarnings : 881682.54;
+    const selectEl = document.getElementById('bs-setup-entity-select');
+    if (selectEl) {
+        selectEl.innerHTML = "";
+        companiesList.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            selectEl.appendChild(opt);
+        });
+        selectEl.value = currentCompany;
+    }
 
-    // @ts-ignore
+    window.handleBalanceSheetModalEntityChange(currentCompany);
+
     const modalEl = document.getElementById('balanceSheetSetupModal');
     if (modalEl && window.bootstrap) {
         const modal = new bootstrap.Modal(modalEl);
@@ -217,11 +417,30 @@ window.openBalanceSheetSetupModal = () => {
     }
 };
 
+window.handleBalanceSheetModalEntityChange = (entityName) => {
+    const accts = balanceSheetAccountsByCompany[entityName] || {
+        stcu: 0, pettyCash: 0, horizons: 0, holmes: 0, yaroslav: 0,
+        balserJanet: 0, balserRob: 0, openingEquity: 0, retainedEarnings: 0
+    };
+
+    document.getElementById('bs-stcu-balance').value = accts.stcu !== undefined ? accts.stcu : 0;
+    document.getElementById('bs-petty-cash').value = accts.pettyCash !== undefined ? accts.pettyCash : 0;
+    document.getElementById('bs-horizons').value = accts.horizons !== undefined ? accts.horizons : 0;
+    document.getElementById('bs-holmes').value = accts.holmes !== undefined ? accts.holmes : 0;
+    document.getElementById('bs-yaroslav').value = accts.yaroslav !== undefined ? accts.yaroslav : 0;
+    document.getElementById('bs-balser-janet').value = accts.balserJanet !== undefined ? accts.balserJanet : 0;
+    document.getElementById('bs-balser-rob').value = accts.balserRob !== undefined ? accts.balserRob : 0;
+    document.getElementById('bs-opening-equity').value = accts.openingEquity !== undefined ? accts.openingEquity : 0;
+    document.getElementById('bs-retained-earnings').value = accts.retainedEarnings !== undefined ? accts.retainedEarnings : 0;
+};
+
 window.saveBalanceSheetSettings = async (showAlert = true) => {
-    const stcuInput = document.getElementById('bs-stcu-balance');
+    const selectEl = document.getElementById('bs-setup-entity-select');
+    const targetEntity = (selectEl && selectEl.value) ? selectEl.value : currentCompany;
+
     const modalEl = document.getElementById('balanceSheetSetupModal');
-    if (stcuInput && modalEl && modalEl.classList.contains('show')) {
-        balanceSheetAccounts = {
+    if (modalEl && modalEl.classList.contains('show')) {
+        balanceSheetAccountsByCompany[targetEntity] = {
             stcu: parseFloat(document.getElementById('bs-stcu-balance').value) || 0,
             pettyCash: parseFloat(document.getElementById('bs-petty-cash').value) || 0,
             horizons: parseFloat(document.getElementById('bs-horizons').value) || 0,
@@ -236,20 +455,19 @@ window.saveBalanceSheetSettings = async (showAlert = true) => {
 
     if (auth.currentUser) {
         try {
-            localStorage.setItem(`omabooks_bs_${auth.currentUser.uid}`, JSON.stringify(balanceSheetAccounts));
-            await setDoc(doc(db, 'settings', `balance_sheet_${auth.currentUser.uid}`), balanceSheetAccounts, { merge: true });
+            localStorage.setItem(`omabooks_bs_multi_${auth.currentUser.uid}`, JSON.stringify(balanceSheetAccountsByCompany));
+            await setDoc(doc(db, 'settings', `balance_sheet_multi_${auth.currentUser.uid}`), balanceSheetAccountsByCompany, { merge: true });
         } catch (e) {
             console.error("Error saving balance sheet settings:", e);
         }
     }
 
-    // @ts-ignore
     if (modalEl && window.bootstrap) {
         const modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
     }
     if (showAlert) {
-        alert("Balance Sheet accounts saved successfully!");
+        alert(`Balance Sheet initial accounts for "${targetEntity}" saved successfully!`);
     }
 };
 
@@ -362,10 +580,13 @@ window.generateReport = async () => {
         return;
     }
 
-    // Filter transactions within the selected date range
+    // Filter transactions within the selected date range and current entity
     const transInRange = cachedTransactions.filter(t => {
         if (!t.date) return false;
-        return t.date >= start && t.date <= end;
+        const matchesDate = (t.date >= start && t.date <= end);
+        const tCompany = t.company || "Lambda West, Inc.";
+        const matchesCompany = (tCompany === currentCompany);
+        return matchesDate && matchesCompany;
     });
 
     // Format Date Range Subtitle (e.g. "January through December 2025")
@@ -599,121 +820,140 @@ window.generateBalanceSheet = async () => {
     const year = asOfDateObj.getFullYear();
     const colHeaderStr = `${asOfDateObj.toLocaleString('en-US', { month: 'short' })} ${day}, ${String(year).slice(-2)}`;
 
+    const activeComp = currentCompany;
+    const isTrust = activeComp.includes('Trust');
+    const companyName = activeComp;
+
     // 1. Current Assets
-    const pettyCash = balanceSheetAccounts.pettyCash !== undefined ? balanceSheetAccounts.pettyCash : -1566.97;
-    const stcu = balanceSheetAccounts.stcu !== undefined ? balanceSheetAccounts.stcu : 27977.23;
+    const pettyCash = balanceSheetAccounts.pettyCash !== undefined ? balanceSheetAccounts.pettyCash : (isTrust ? 0 : -1566.97);
+    const stcu = balanceSheetAccounts.stcu !== undefined ? balanceSheetAccounts.stcu : (isTrust ? 0 : 27977.23);
     const totalChecking = pettyCash + stcu;
 
-    const holmes = balanceSheetAccounts.holmes !== undefined ? balanceSheetAccounts.holmes : 10716.06;
-    const yaroslav = balanceSheetAccounts.yaroslav !== undefined ? balanceSheetAccounts.yaroslav : 8090.40;
-    const horizons = balanceSheetAccounts.horizons !== undefined ? balanceSheetAccounts.horizons : 40000.00;
+    const holmes = balanceSheetAccounts.holmes !== undefined ? balanceSheetAccounts.holmes : (isTrust ? 0 : 10716.06);
+    const yaroslav = balanceSheetAccounts.yaroslav !== undefined ? balanceSheetAccounts.yaroslav : (isTrust ? 0 : 8090.40);
+    const horizons = balanceSheetAccounts.horizons !== undefined ? balanceSheetAccounts.horizons : (isTrust ? 0 : 40000.00);
     const totalOtherCurrent = holmes + yaroslav + horizons;
 
     const totalCurrentAssets = totalChecking + totalOtherCurrent;
 
-    // 2. Fixed Assets (Matching Lambda West, Inc. Balance Sheet)
-    const fixedAssetsList = [
-        { code: "1505", name: "816 Yolo St", dep: -29000.00, other: 376083.77, total: 347083.77 },
-        { code: "1535", name: "Ponderosa Trailer Park", dep: -98076.91, origCost: 326850.00, other: -11538.46, total: 217234.63 },
-        { code: "1550", name: "Land, Pine Creek", total: 91512.60 },
-        { code: "1551", name: "Ponderosa Major Repair 2023", total: 8794.02 },
-        { code: "1560", name: "MacDonald Lane", total: 75507.42 },
-        { code: "1561", name: "Narrow Way House", dep: -22904.00, other: 272274.01, total: 249370.01 },
-        { code: "1565", name: "Ivie 5 acres lot 1", total: 32587.33 },
-        { code: "1610", name: "Husqvarna Lawn Tractor, 2005", total: 300.00 },
-        { code: "1612", name: "Dump Trailer", total: 1000.00 },
-        { code: "1625", name: "Can Am Commander", total: 1000.00 },
-        { code: "1631", name: "Kubota Tractor", total: 2300.00 },
-        { code: "1632", name: "John Deere Dozer 450", total: 1000.00 },
-        { code: "1633", name: "Eager Beaver Trailer", total: 800.00 },
-        { code: "1635", name: "John Deere Cat 450C", total: 1000.00 },
-        { code: "1640", name: "Dodge Pickup", total: 4905.10 },
-        { code: "1642", name: "Dodge Pickup 2001", total: 5684.00 },
-        { code: "1650", name: "Dump Truck", total: 1000.00 },
-        { code: "1689", name: "Box Trailer", total: 4721.62 },
-        { code: "1691", name: "Hicory Sheds", total: 500.00 },
-        { code: "1692", name: "Honda 700", total: 753.27 },
-        { code: "1693", name: "Prevost 1985 Bus", total: 3500.00 },
-        { code: "1694", name: "Sequoia Mill", total: 1000.00 },
-        { code: "1695", name: "Suzuki LTZ 400", total: 1000.63 },
-        { code: "1696", name: "Yamaha YXZ10", total: 4177.59 },
-        { code: "1710", name: "Road Grader #2", total: 1000.00 }
-    ];
+    // 2. Fixed Assets
+    let fixedAssetsList = [];
+    if (activeComp === 'Lambda West, Inc.') {
+        fixedAssetsList = [
+            { code: "1505", name: "816 Yolo St", dep: -29000.00, other: 376083.77, total: 347083.77 },
+            { code: "1535", name: "Ponderosa Trailer Park", dep: -98076.91, origCost: 326850.00, other: -11538.46, total: 217234.63 },
+            { code: "1550", name: "Land, Pine Creek", total: 91512.60 },
+            { code: "1551", name: "Ponderosa Major Repair 2023", total: 8794.02 },
+            { code: "1560", name: "MacDonald Lane", total: 75507.42 },
+            { code: "1561", name: "Narrow Way House", dep: -22904.00, other: 272274.01, total: 249370.01 },
+            { code: "1565", name: "Ivie 5 acres lot 1", total: 32587.33 },
+            { code: "1610", name: "Husqvarna Lawn Tractor, 2005", total: 300.00 },
+            { code: "1612", name: "Dump Trailer", total: 1000.00 },
+            { code: "1625", name: "Can Am Commander", total: 1000.00 },
+            { code: "1631", name: "Kubota Tractor", total: 2300.00 },
+            { code: "1632", name: "John Deere Dozer 450", total: 1000.00 },
+            { code: "1633", name: "Eager Beaver Trailer", total: 800.00 },
+            { code: "1635", name: "John Deere Cat 450C", total: 1000.00 },
+            { code: "1640", name: "Dodge Pickup", total: 4905.10 },
+            { code: "1642", name: "Dodge Pickup 2001", total: 5684.00 },
+            { code: "1650", name: "Dump Truck", total: 1000.00 },
+            { code: "1689", name: "Box Trailer", total: 4721.62 },
+            { code: "1691", name: "Hicory Sheds", total: 500.00 },
+            { code: "1692", name: "Honda 700", total: 753.27 },
+            { code: "1693", name: "Prevost 1985 Bus", total: 3500.00 },
+            { code: "1694", name: "Sequoia Mill", total: 1000.00 },
+            { code: "1695", name: "Suzuki LTZ 400", total: 1000.63 },
+            { code: "1696", name: "Yamaha YXZ10", total: 4177.59 },
+            { code: "1710", name: "Road Grader #2", total: 1000.00 }
+        ];
+    } else {
+        const entityAssets = cachedAssets.filter(a => (a.company || "Lambda West, Inc.") === activeComp);
+        fixedAssetsList = entityAssets.map(a => ({
+            code: a.accountCode || "1500",
+            name: a.name,
+            total: Number(a.value) || 0
+        }));
+    }
 
     let totalFixedAssets = 0;
     let fixedAssetsRowsHtml = "";
 
-    fixedAssetsList.forEach(fa => {
-        totalFixedAssets += fa.total;
+    if (fixedAssetsList.length === 0) {
+        fixedAssetsRowsHtml = `<tr><td colspan="2" style="padding-left: 20px; color: #94a3b8;">No fixed assets recorded for this entity yet.</td></tr>`;
+    } else {
+        fixedAssetsList.forEach(fa => {
+            totalFixedAssets += fa.total;
 
-        if (fa.dep !== undefined) {
-            fixedAssetsRowsHtml += `
-                <tr>
-                    <td style="padding-left: 20px; font-weight: 600;">${fa.code} &middot; ${fa.name}</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td style="padding-left: 45px; color: #334155;">Depreciation</td>
-                    <td class="qb-amount-cell" style="text-align: right;">${fa.dep.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>`;
-            if (fa.origCost !== undefined) {
+            if (fa.dep !== undefined) {
                 fixedAssetsRowsHtml += `
-                <tr>
-                    <td style="padding-left: 45px; color: #334155;">Original Cost</td>
-                    <td class="qb-amount-cell" style="text-align: right;">${fa.origCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>`;
-            }
-            if (fa.other !== undefined) {
+                    <tr>
+                        <td style="padding-left: 20px; font-weight: 600;">${fa.code} &middot; ${fa.name}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 45px; color: #334155;">Depreciation</td>
+                        <td class="qb-amount-cell" style="text-align: right;">${fa.dep.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>`;
+                if (fa.origCost !== undefined) {
+                    fixedAssetsRowsHtml += `
+                    <tr>
+                        <td style="padding-left: 45px; color: #334155;">Original Cost</td>
+                        <td class="qb-amount-cell" style="text-align: right;">${fa.origCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>`;
+                }
+                if (fa.other !== undefined) {
+                    fixedAssetsRowsHtml += `
+                    <tr>
+                        <td style="padding-left: 45px; color: #334155;">${fa.code} &middot; ${fa.name} - Other</td>
+                        <td class="qb-amount-cell" style="text-align: right;">${fa.other.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>`;
+                }
                 fixedAssetsRowsHtml += `
-                <tr>
-                    <td style="padding-left: 45px; color: #334155;">${fa.code} &middot; ${fa.name} - Other</td>
-                    <td class="qb-amount-cell" style="text-align: right;">${fa.other.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>`;
+                    <tr style="border-top: 1px solid #94a3b8;">
+                        <td style="padding-left: 20px; font-weight: 700;">Total ${fa.code} &middot; ${fa.name}</td>
+                        <td class="qb-amount-cell" style="text-align: right; font-weight: 700;">${fa.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>`;
+            } else {
+                fixedAssetsRowsHtml += `
+                    <tr>
+                        <td style="padding-left: 20px;">${fa.code} &middot; ${fa.name}</td>
+                        <td class="qb-amount-cell" style="text-align: right;">${fa.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>`;
             }
-            fixedAssetsRowsHtml += `
-                <tr style="border-top: 1px solid #94a3b8;">
-                    <td style="padding-left: 20px; font-weight: 700;">Total ${fa.code} &middot; ${fa.name}</td>
-                    <td class="qb-amount-cell" style="text-align: right; font-weight: 700;">${fa.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>`;
-        } else {
-            fixedAssetsRowsHtml += `
-                <tr>
-                    <td style="padding-left: 20px;">${fa.code} &middot; ${fa.name}</td>
-                    <td class="qb-amount-cell" style="text-align: right;">${fa.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>`;
-        }
-    });
+        });
+    }
 
     const totalAssets = totalCurrentAssets + totalFixedAssets;
 
     // 3. Liabilities
-    const balserJanet = balanceSheetAccounts.balserJanet !== undefined ? balanceSheetAccounts.balserJanet : 197000.00;
-    const balserRob = balanceSheetAccounts.balserRob !== undefined ? balanceSheetAccounts.balserRob : 140000.00;
+    const balserJanet = balanceSheetAccounts.balserJanet !== undefined ? balanceSheetAccounts.balserJanet : (isTrust ? 0 : 197000.00);
+    const balserRob = balanceSheetAccounts.balserRob !== undefined ? balanceSheetAccounts.balserRob : (isTrust ? 0 : 140000.00);
     const totalLongTermLiabilities = balserJanet + balserRob;
     const totalLiabilities = totalLongTermLiabilities;
 
     // 4. Equity
-    const openingEquity = balanceSheetAccounts.openingEquity !== undefined ? balanceSheetAccounts.openingEquity : -68420.19;
-    const retainedEarnings = balanceSheetAccounts.retainedEarnings !== undefined ? balanceSheetAccounts.retainedEarnings : 881682.54;
+    const openingEquity = balanceSheetAccounts.openingEquity !== undefined ? balanceSheetAccounts.openingEquity : (isTrust ? 0 : -68420.19);
+    const retainedEarnings = balanceSheetAccounts.retainedEarnings !== undefined ? balanceSheetAccounts.retainedEarnings : (isTrust ? 0 : 881682.54);
 
-    // Calculate Net Income from transactions up to asOfDate
+    // Calculate Net Income from transactions up to asOfDate for active entity
     let netIncome = 0;
     cachedTransactions.forEach(t => {
         if (!t.date || t.date <= asOfDateStr) {
-            const amt = Number(t.amount) || 0;
-            if (t.type === 'income') netIncome += amt;
-            else netIncome -= amt;
+            const tComp = t.company || "Lambda West, Inc.";
+            if (tComp === activeComp) {
+                const amt = Number(t.amount) || 0;
+                if (t.type === 'income') netIncome += amt;
+                else netIncome -= amt;
+            }
         }
     });
-    // If no transactions entered yet, match the photo's Net Income of -7,313.64
-    if (cachedTransactions.length === 0) {
+    // If no transactions entered yet for Lambda West, match the photo's Net Income of -7,313.64
+    if (activeComp === 'Lambda West, Inc.' && cachedTransactions.filter(t => (t.company || 'Lambda West, Inc.') === 'Lambda West, Inc.').length === 0) {
         netIncome = -7313.64;
     }
 
     const totalEquity = openingEquity + retainedEarnings + netIncome;
     const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
-
-    const companyName = companyProfile.name || "Lambda West, Inc.";
 
     const reportHtml = `
         <div class="qb-report-sheet" id="printable-qb-report">
@@ -877,6 +1117,9 @@ window.generateTrialBalance = async () => {
 
     cachedTransactions.forEach(t => {
         if (!t.date || t.date <= endDateStr) {
+            const tComp = t.company || "Lambda West, Inc.";
+            if (tComp !== currentCompany) return;
+
             const parsed = parseAccount(t.category);
             const amt = Number(t.amount) || 0;
             const code = parsed.code || "6990";
@@ -983,6 +1226,8 @@ window.saveData = async () => {
     }
 
     const payeeVal = payeeInput ? payeeInput.value.trim() : "";
+    const companySelect = document.getElementById('trans-company');
+    const companyVal = companySelect ? companySelect.value : currentCompany;
     const originalText = btn ? btn.innerText : "Save Entry";
 
     try {
@@ -1002,6 +1247,7 @@ window.saveData = async () => {
             assetName: selectedAssetName,
             payee: payeeVal,
             type: legacyType,
+            company: companyVal,
             userId: auth.currentUser.uid,
             createdAt: new Date()
         });
@@ -1077,6 +1323,7 @@ window.applyTransactionFilters = () => {
     const searchFilter = (document.getElementById('trans-search-filter') ? document.getElementById('trans-search-filter').value : "").toLowerCase().trim();
     const assetFilter = document.getElementById('trans-asset-filter') ? document.getElementById('trans-asset-filter').value : "ALL";
     const typeFilter = document.getElementById('trans-type-filter') ? document.getElementById('trans-type-filter').value : "ALL";
+    const companyFilter = document.getElementById('trans-company-filter') ? document.getElementById('trans-company-filter').value : "ACTIVE";
     const listBody = document.getElementById('transaction-list');
     const countDisplay = document.getElementById('trans-count-display');
 
@@ -1084,6 +1331,13 @@ window.applyTransactionFilters = () => {
     listBody.innerHTML = "";
 
     const filtered = cachedTransactions.filter(t => {
+        const tCompany = t.company || "Lambda West, Inc.";
+        if (companyFilter === "ACTIVE") {
+            if (tCompany !== currentCompany) return false;
+        } else if (companyFilter !== "ALL") {
+            if (tCompany !== companyFilter) return false;
+        }
+
         if (assetFilter !== "ALL") {
             if (t.assetId !== assetFilter && t.assetName !== assetFilter) return false;
         }
@@ -1282,11 +1536,13 @@ window.addAsset = async () => {
     const catInput = document.getElementById('asset-category');
     const valueInput = document.getElementById('asset-value');
     const dateInput = document.getElementById('asset-date');
+    const companySelect = document.getElementById('asset-company-select');
     const btn = document.querySelector('[onclick="addAsset()"]');
 
     const value = parseFloat(valueInput.value) || 0;
     const name = nameInput.value.trim();
     if (!name) return alert("Please enter Asset / Property Name");
+    const companyVal = companySelect ? companySelect.value : currentCompany;
 
     try {
         if (btn) btn.disabled = true;
@@ -1294,6 +1550,7 @@ window.addAsset = async () => {
             name: name,
             category: catInput ? catInput.value : 'Real Estate',
             value: value,
+            company: companyVal,
             purchaseDate: (dateInput && dateInput.value) ? dateInput.value : new Date().toISOString().split('T')[0],
             userId: auth.currentUser.uid,
             createdAt: new Date()
@@ -1360,6 +1617,7 @@ function renderPortfolioUI() {
     const tableBody = document.getElementById('asset-ledger-summary-list');
     const cardsContainer = document.getElementById('portfolio-cards-view');
     const catFilter = document.getElementById('portfolio-category-filter') ? document.getElementById('portfolio-category-filter').value : "ALL";
+    const companyFilter = document.getElementById('portfolio-company-filter') ? document.getElementById('portfolio-company-filter').value : "ACTIVE";
 
     let portfolioTotalBasis = 0;
     let portfolioTotalInflows = 0;
@@ -1370,10 +1628,16 @@ function renderPortfolioUI() {
 
     const filteredAssets = cachedAssets.filter(a => {
         if (catFilter !== "ALL" && a.category !== catFilter) return false;
+        const aCompany = a.company || "Lambda West, Inc.";
+        if (companyFilter === "ACTIVE") {
+            if (aCompany !== currentCompany) return false;
+        } else if (companyFilter !== "ALL") {
+            if (aCompany !== companyFilter) return false;
+        }
         return true;
     });
 
-    cachedAssets.forEach(a => {
+    filteredAssets.forEach(a => {
         portfolioTotalBasis += Number(a.value) || 0;
     });
 
@@ -1399,13 +1663,17 @@ function renderPortfolioUI() {
         if (matchedAssetId && assetStats[matchedAssetId]) {
             if (isIncome) {
                 assetStats[matchedAssetId].inflow += amount;
-                portfolioTotalInflows += amount;
             } else {
                 assetStats[matchedAssetId].outflow += amount;
-                portfolioTotalOutflows += amount;
             }
             assetStats[matchedAssetId].count++;
         }
+    });
+
+    filteredAssets.forEach(a => {
+        const s = assetStats[a.id] || { inflow: 0, outflow: 0 };
+        portfolioTotalInflows += s.inflow;
+        portfolioTotalOutflows += s.outflow;
     });
 
     // Update KPI Ribbon
@@ -1875,6 +2143,7 @@ window.seedLambdaWestAssets = async () => {
                 accountCode: item.accountCode,
                 purchaseDate: item.purchaseDate,
                 description: item.description || '',
+                company: "Lambda West, Inc.",
                 userId: auth.currentUser.uid,
                 createdAt: new Date()
             });
