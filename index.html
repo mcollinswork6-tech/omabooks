@@ -30,11 +30,26 @@
 
 
     <main id="app-content" class="d-none">
-        <nav class="navbar navbar-light bg-white border-bottom py-3 mb-4">
-            <div class="container">
-                <img src="css/image.png" alt="OmaBooks Logo" class="app-icon me-2">
-                <h2 class="fw-bold mb-0">Dashboard</h2>
-                <button onclick="logout()" class="btn btn-outline-danger btn-sm rounded-pill px-3">Logout</button>
+        <nav class="navbar navbar-light bg-white border-bottom py-3 mb-4 shadow-sm">
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="css/image.png" alt="OmaBooks Logo" class="app-icon me-3">
+                    <div>
+                        <h2 class="fw-bold mb-0 lh-1">OmaBooks</h2>
+                        <small class="text-muted d-block mt-1">QuickBooks Edition</small>
+                    </div>
+                    <span class="badge bg-light text-dark border px-3 py-2 ms-4 d-none d-md-inline-flex align-items-center" id="company-name-badge" role="button" onclick="window.openCompanyModal()" title="Click to edit Company Settings">
+                        <i class="bi bi-building me-2 text-primary"></i>
+                        <span id="nav-company-name" class="fw-bold">Lambda West, Inc.</span>
+                        <i class="bi bi-gear ms-2 text-muted"></i>
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="window.openCompanyModal()">
+                        <i class="bi bi-gear-fill me-1"></i> Company Setup
+                    </button>
+                    <button onclick="logout()" class="btn btn-outline-danger btn-sm rounded-pill px-3">Logout</button>
+                </div>
             </div>
         </nav>
 
@@ -42,22 +57,34 @@
             <!-- Navigation Tabs -->
             <ul class="nav nav-pills mb-4" id="financeTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active rounded-pill px-4 me-2 fw-bold" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-pane" type="button" role="tab" aria-controls="overview-pane" aria-selected="true">Overview</button>
+                    <button class="nav-link active rounded-pill px-4 me-2 fw-bold" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-pane" type="button" role="tab" aria-controls="overview-pane" aria-selected="true">
+                        <i class="bi bi-graph-up me-1"></i> Overview & Reports
+                    </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions-pane" type="button" role="tab" aria-controls="transactions-pane" aria-selected="false">Transactions</button>
+                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions-pane" type="button" role="tab" aria-controls="transactions-pane" aria-selected="false">
+                        <i class="bi bi-journal-text me-1"></i> Transactions
+                    </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="vault-tab" data-bs-toggle="tab" data-bs-target="#vault-pane" type="button" role="tab" aria-controls="vault-pane" aria-selected="false">Vault</button>
+                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio-pane" type="button" role="tab" aria-controls="portfolio-pane" aria-selected="false">
+                        <i class="bi bi-collection-fill me-1"></i> Asset Portfolio & Ledgers
+                    </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio-pane" type="button" role="tab" aria-controls="portfolio-pane" aria-selected="false">Portfolio</button>
+                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices-pane" type="button" role="tab" aria-controls="invoices-pane" aria-selected="false">
+                        <i class="bi bi-receipt me-1"></i> Invoices
+                    </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices-pane" type="button" role="tab" aria-controls="invoices-pane" aria-selected="false">Invoices</button>
+                    <button class="nav-link rounded-pill px-4 me-2 fw-bold" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers-pane" type="button" role="tab" aria-controls="customers-pane" aria-selected="false">
+                        <i class="bi bi-people me-1"></i> Customers / Tenants
+                    </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link rounded-pill px-4 fw-bold" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers-pane" type="button" role="tab" aria-controls="customers-pane" aria-selected="false">Customers</button>
+                    <button class="nav-link rounded-pill px-4 fw-bold" id="vault-tab" data-bs-toggle="tab" data-bs-target="#vault-pane" type="button" role="tab" aria-controls="vault-pane" aria-selected="false">
+                        <i class="bi bi-safe me-1"></i> Vault
+                    </button>
                 </li>
             </ul>
 
@@ -66,42 +93,90 @@
                 
                 <!-- OVERVIEW TAB -->
                 <div class="tab-pane fade show active" id="overview-pane" role="tabpanel" aria-labelledby="overview-tab" tabindex="0">
-                    <div class="card p-4 mb-4">
-                        <div class="row g-3 align-items-end">
-                            <h2 class="fw-bold mb-4">Financial Reports</h2>
-                            <div class="col-md-4">
+                    <div class="card p-4 mb-4 border-0 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <div>
+                                <h3 class="fw-bold mb-1"><i class="bi bi-file-earmark-spreadsheet me-2 text-primary"></i>QuickBooks Financial Statements</h3>
+                                <p class="text-muted small mb-0">Generate authentic Profit & Loss, Balance Sheet (Assets = Liabilities + Equity), and Trial Balance statements.</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-dark btn-sm rounded-pill px-3" onclick="window.openBalanceSheetSetupModal()">
+                                    <i class="bi bi-sliders me-1"></i> Balance Sheet Account Setup
+                                </button>
+                                <span class="badge bg-light text-dark border px-3 py-2" id="report-basis-display">
+                                    <i class="bi bi-check2-circle text-success me-1"></i> Accrual Basis
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Date Preset Buttons -->
+                        <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+                            <span class="small fw-bold text-muted me-2">Quick Periods:</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="window.setReportPeriod('2025')">Jan - Dec 2025</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="window.setReportPeriod('bs2025')">Dec 31, 2025 (Balance Sheet)</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="window.setReportPeriod('2026')">Jan - Dec 2026</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="window.setReportPeriod('ytd')">Year to Date</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="window.setReportPeriod('all')">All Dates</button>
+                        </div>
+
+                        <div class="row g-3 align-items-end mb-3">
+                            <div class="col-md-3">
                                 <label class="form-label small fw-bold">Start Date</label>
-                                <input type="date" id="report-start" class="form-control">
+                                <input type="date" id="report-start" class="form-control" value="2025-01-01">
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label small fw-bold">End Date</label>
-                                <input type="date" id="report-end" class="form-control">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold" id="report-end-label">End / As of Date</label>
+                                <input type="date" id="report-end" class="form-control" value="2025-12-31">
                             </div>
-                            <div class="col-md-4">
-                                <button onclick="generateReport()" class="btn btn-primary w-100">Generate Report</button>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Accounting Basis</label>
+                                <select id="report-basis" class="form-select">
+                                    <option value="Accrual Basis" selected>Accrual Basis</option>
+                                    <option value="Cash Basis">Cash Basis</option>
+                                </select>
                             </div>
+                            <div class="col-md-3">
+                                <button onclick="generateReport()" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
+                                    <i class="bi bi-file-earmark-bar-graph me-1"></i> Profit & Loss (P&L)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 pt-2 border-top">
+                            <button onclick="generateBalanceSheet()" class="btn btn-success fw-bold px-4 py-2 shadow-sm rounded-pill">
+                                <i class="bi bi-journal-text me-1"></i> Generate Balance Sheet
+                            </button>
+                            <button onclick="generateTrialBalance()" class="btn btn-outline-secondary fw-bold px-4 py-2 shadow-sm rounded-pill">
+                                <i class="bi bi-arrow-left-right me-1"></i> Debit & Credit Trial Balance
+                            </button>
                         </div>
                     </div>
                     
-                    <section class="py-4">
-                        <h2 class="fw-bold mb-4">Financial Overview</h2>
-                        <div class="row g-4 mb-5">
+                    <section class="py-2">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold mb-0">Financial Overview</h4>
+                            <small class="text-muted">Live calculations across all transactions</small>
+                        </div>
+                        <div class="row g-4 mb-4">
                             <div class="col-md-4">
-                                <div class="card p-4 h-100">
-                                    <p class="text-muted small fw-bold text-uppercase">Total Income</p>
+                                <div class="card p-4 h-100 border-0 shadow-sm border-start border-success border-4">
+                                    <p class="text-muted small fw-bold text-uppercase mb-1">Total Income</p>
                                     <span id="total-income" class="stat-card-value text-success">$0.00</span>
+                                    <small class="text-muted mt-2 d-block"><i class="bi bi-arrow-up-right me-1 text-success"></i>Revenue & rent receipts</small>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="card p-4 h-100">
-                                    <p class="text-muted small fw-bold text-uppercase">Total Expenses</p>
+                                <div class="card p-4 h-100 border-0 shadow-sm border-start border-danger border-4">
+                                    <p class="text-muted small fw-bold text-uppercase mb-1">Total Operating Expenses</p>
                                     <span id="total-expenses" class="stat-card-value text-danger">$0.00</span>
+                                    <small class="text-muted mt-2 d-block"><i class="bi bi-arrow-down-right me-1 text-danger"></i>Repairs, taxes, utilities, insurance</small>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="card p-4 h-100 bg-primary text-white">
-                                    <p class="small fw-bold text-uppercase opacity-75">Net Balance</p>
+                                <div class="card p-4 h-100 bg-primary text-white shadow">
+                                    <p class="small fw-bold text-uppercase opacity-75 mb-1">Net Ordinary Income</p>
                                     <span id="net-balance" class="stat-card-value text-white">$0.00</span>
+                                    <small class="text-white opacity-75 mt-2 d-block"><i class="bi bi-calculator me-1"></i>Total Gross Profit minus Expenses</small>
                                 </div>
                             </div>
                         </div>
@@ -110,47 +185,190 @@
 
                 <!-- TRANSACTIONS TAB -->
                 <div class="tab-pane fade" id="transactions-pane" role="tabpanel" aria-labelledby="transactions-tab" tabindex="0">
-                    <section class="py-4">
-                        <div class="card p-4 mb-4">
-                            <h4 class="fw-bold mb-4">Add Transaction</h4>
+                    <section class="py-2">
+                        <div class="card p-4 mb-4 border-0 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="fw-bold mb-0"><i class="bi bi-plus-circle-fill me-2 text-primary"></i>Record Transaction (Debit & Credit)</h4>
+                                <span class="badge bg-light text-muted border">QuickBooks Chart of Accounts</span>
+                            </div>
                             <div class="row g-3">
-                                <div class="col-md-2"><input type="date" id="date-input" class="form-control"></div>
-                                <div class="col-md-4"><input type="text" id="desc" class="form-control"
-                                        placeholder="Description"></div>
-                                <div class="col-md-2"><input type="number" id="amount" class="form-control" placeholder="0.00">
-                                </div>
                                 <div class="col-md-2">
-                                    <select id="category" class="form-select">
-                                        <option value="Rental Income">Rental Income</option>
-                                        <option value="Maintenance">Maintenance</option>
-                                        <option value="Repairs">Repairs</option>
-                                        <option value="Taxes">Taxes</option>
-                                        <option value="Insurance">Insurance</option>
-                                        <option value="Other">Other</option>
+                                    <label class="form-label small fw-bold text-muted">Date</label>
+                                    <input type="date" id="date-input" class="form-control">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted">Account / Category</label>
+                                    <select id="category" class="form-select" onchange="window.handleAccountChange && window.handleAccountChange(this.value)">
+                                        <optgroup label="Bank & Current Assets (1000-1499)">
+                                            <option value="1005 · STCU Checking/Savings">1005 · STCU Checking/Savings</option>
+                                            <option value="1002 · Petty Cash">1002 · Petty Cash</option>
+                                            <option value="1200 · Accounts Receivable">1200 · Accounts Receivable</option>
+                                            <option value="1256 · Harold Holmes">1256 · Harold Holmes</option>
+                                            <option value="1257 · Yaroslav Nikolaychuk">1257 · Yaroslav Nikolaychuk</option>
+                                            <option value="1260 · Horizons Unlimited, Inc.">1260 · Horizons Unlimited, Inc.</option>
+                                        </optgroup>
+                                        <optgroup label="Fixed Assets (1500-1799)">
+                                            <option value="1505 · 816 Yolo St">1505 · 816 Yolo St</option>
+                                            <option value="1535 · Ponderosa Trailer Park">1535 · Ponderosa Trailer Park</option>
+                                            <option value="1550 · Land, Pine Creek">1550 · Land, Pine Creek</option>
+                                            <option value="1551 · Ponderosa Major Repair 2023">1551 · Ponderosa Major Repair 2023</option>
+                                            <option value="1560 · MacDonald Lane">1560 · MacDonald Lane</option>
+                                            <option value="1561 · Narrow Way House">1561 · Narrow Way House</option>
+                                            <option value="1565 · Ivie 5 acres lot 1">1565 · Ivie 5 acres lot 1</option>
+                                            <option value="1610 · Husqvarna Lawn Tractor">1610 · Husqvarna Lawn Tractor</option>
+                                            <option value="1631 · Kubota Tractor">1631 · Kubota Tractor</option>
+                                            <option value="1640 · Dodge Pickup">1640 · Dodge Pickup</option>
+                                            <option value="1650 · Dump Truck">1650 · Dump Truck</option>
+                                            <option value="1693 · Prevost 1985 Bus">1693 · Prevost 1985 Bus</option>
+                                            <option value="1700 · Accumulated Depreciation">1700 · Accumulated Depreciation</option>
+                                        </optgroup>
+                                        <optgroup label="Liabilities (2000-2999)">
+                                            <option value="2000 · Accounts Payable">2000 · Accounts Payable</option>
+                                            <option value="2318 · Balser Trust, Janet">2318 · Balser Trust, Janet</option>
+                                            <option value="2319 · Balser Trust, Rob">2319 · Balser Trust, Rob</option>
+                                            <option value="2350 · Long Term Mortgages">2350 · Long Term Mortgages</option>
+                                        </optgroup>
+                                        <optgroup label="Equity (3000-3999)">
+                                            <option value="3000 · Opening Bal Equity">3000 · Opening Bal Equity</option>
+                                            <option value="3200 · Retained Earnings">3200 · Retained Earnings</option>
+                                        </optgroup>
+                                        <optgroup label="Income Accounts (4000-4999)">
+                                            <option value="4060 · Rent Income" selected>4060 · Rent Income</option>
+                                            <option value="4015 · Contract Labor Income">4015 · Contract Labor Income</option>
+                                            <option value="4030 · Interest Earned">4030 · Interest Earned</option>
+                                            <option value="4900 · Other Income">4900 · Other Income</option>
+                                        </optgroup>
+                                        <optgroup label="Operating Expense Accounts (6000-6999)">
+                                            <option value="6300 · Repairs">6300 · Repairs</option>
+                                            <option value="6850 · Property Taxes">6850 · Property Taxes</option>
+                                            <option value="6820 · Taxes">6820 · Taxes</option>
+                                            <option value="6180 · Insurance">6180 · Insurance</option>
+                                            <option value="6390 · Utilities">6390 · Utilities</option>
+                                            <option value="6200 · Interest Expense">6200 · Interest Expense</option>
+                                            <option value="6375 · Mortgage Interest">6375 · Mortgage Interest</option>
+                                            <option value="6150 · Depreciation Expense">6150 · Depreciation Expense</option>
+                                            <option value="6560 · Payroll Expenses">6560 · Payroll Expenses</option>
+                                            <option value="6110 · Automobile Expense">6110 · Automobile Expense</option>
+                                            <option value="6770 · Supplies">6770 · Supplies</option>
+                                            <option value="6790 · Office Supplies">6790 · Office Supplies</option>
+                                            <option value="6050 · Advertising">6050 · Advertising</option>
+                                            <option value="6135 · Charity">6135 · Charity</option>
+                                            <option value="6138 · Contract Labor Expense">6138 · Contract Labor Expense</option>
+                                            <option value="6145 · Corporate Health">6145 · Corporate Health</option>
+                                            <option value="6160 · Dues and Subscriptions">6160 · Dues and Subscriptions</option>
+                                            <option value="6165 · Education and Business">6165 · Education and Business</option>
+                                            <option value="6170 · Equipment Rental">6170 · Equipment Rental</option>
+                                            <option value="6230 · Licenses and Permits">6230 · Licenses and Permits</option>
+                                            <option value="6245 · Per Diem">6245 · Per Diem</option>
+                                            <option value="6270 · Professional Fees">6270 · Professional Fees</option>
+                                            <option value="6340 · Telephone">6340 · Telephone</option>
+                                            <option value="6350 · Travel & Ent">6350 · Travel & Ent</option>
+                                            <option value="6990 · Other Operating Expense">6990 · Other Operating Expense</option>
+                                        </optgroup>
+                                        <optgroup label="Legacy Categories">
+                                            <option value="Rental Income">Rental Income</option>
+                                            <option value="Maintenance">Maintenance</option>
+                                            <option value="Repairs">Repairs</option>
+                                            <option value="Taxes">Taxes</option>
+                                            <option value="Insurance">Insurance</option>
+                                            <option value="Other">Other</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <button onclick="saveData()" class="btn btn-primary w-100">Save</button>
+                                    <label class="form-label small fw-bold text-muted">Asset / Property</label>
+                                    <select id="trans-asset" class="form-select">
+                                        <option value="">-- None / General --</option>
+                                        <!-- Populated from Assets Portfolio -->
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted">Payee / Tenant</label>
+                                    <input type="text" id="trans-payee" class="form-control" list="payee-options" placeholder="Tenant / Vendor">
+                                    <datalist id="payee-options"></datalist>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted">Description / Memo</label>
+                                    <input type="text" id="desc" class="form-control" placeholder="Description / Memo">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted">Amount ($)</label>
+                                    <input type="number" id="amount" class="form-control" placeholder="0.00" step="0.01">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted">Entry Flow</label>
+                                    <select id="trans-dr-cr" class="form-select fw-bold" onchange="window.handleDrCrChange && window.handleDrCrChange(this.value)">
+                                        <option value="credit" class="text-danger">Credit (CR)</option>
+                                        <option value="debit" class="text-success">Debit (DR)</option>
+                                    </select>
+                                    <input type="hidden" id="trans-type" value="income">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button onclick="saveData()" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
+                                        <i class="bi bi-save me-1"></i> Save Entry
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="card overflow-hidden">
+                        <!-- Filter and Search Toolbar -->
+                        <div class="card p-3 mb-3 border-0 shadow-sm bg-light">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="trans-search-filter" class="form-control" placeholder="Search memo, payee, account..." oninput="window.applyTransactionFilters && window.applyTransactionFilters()">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="trans-asset-filter" class="form-select form-select-sm" onchange="window.applyTransactionFilters && window.applyTransactionFilters()">
+                                        <option value="ALL">All Assets / Properties</option>
+                                        <!-- populated dynamically -->
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="trans-type-filter" class="form-select form-select-sm" onchange="window.applyTransactionFilters && window.applyTransactionFilters()">
+                                        <option value="ALL">All Flows (Debits & Credits)</option>
+                                        <option value="debit">Debits (DR) Only</option>
+                                        <option value="credit">Credits (CR) Only</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <span class="small text-muted" id="trans-count-display">Showing all entries</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card overflow-hidden border-0 shadow-sm">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0">
+                                <table class="table table-hover mb-0 qb-ledger-table align-middle">
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Description</th>
-                                            <th>Amount</th>
-                                            <th>Type</th>
-                                            <th>Action</th>
+                                            <th>Account / Code</th>
+                                            <th>Asset / Property</th>
+                                            <th>Payee & Description</th>
+                                            <th class="text-end text-success">Debit (DR)</th>
+                                            <th class="text-end text-danger">Credit (CR)</th>
+                                            <th class="text-end">Balance</th>
+                                            <th class="text-end">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="transaction-list"></tbody>
+                                    <tfoot class="table-light border-top">
+                                        <tr class="fw-bold">
+                                            <td colspan="4" class="text-end">Total General Ledger:</td>
+                                            <td class="text-end text-success tabular-nums" id="trans-total-debit">$0.00</td>
+                                            <td class="text-end text-danger tabular-nums" id="trans-total-credit">$0.00</td>
+                                            <td class="text-end tabular-nums" id="trans-total-balance">$0.00</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>
                         </div>
+                    </section>
+                </div>
                     </section>
                 </div>
 
@@ -191,36 +409,144 @@
 
                 <!-- PORTFOLIO TAB -->
                 <div class="tab-pane fade" id="portfolio-pane" role="tabpanel" aria-labelledby="portfolio-tab" tabindex="0">
-                    <section id="asset-manager" class="py-4">
-                        <div class="card p-4 border-0 shadow-sm">
-                            <h3 class="fw-bold mb-4">Asset Portfolio</h3>
-
-                            <div class="row g-3 mb-4 p-3 bg-light rounded">
-                                <div class="col-md-3">
-                                    <input type="text" id="asset-name" class="form-control"
-                                        placeholder="Asset Name (e.g. 123 Main St)">
+                    <section id="asset-manager" class="py-2">
+                        <!-- Portfolio Header & Summary -->
+                        <div class="card p-4 mb-4 border-0 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                <div>
+                                    <h3 class="fw-bold mb-1"><i class="bi bi-wallet2 me-2 text-primary"></i>Asset Portfolio & Ledgers</h3>
+                                    <p class="text-muted small mb-0">Track real estate, properties, vehicles, and equipment as individual QuickBooks account registers.</p>
                                 </div>
-                                <div class="col-md-2">
-                                    <select id="asset-category" class="form-select">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="window.toggleAddAssetForm()">
+                                        <i class="bi bi-plus-lg me-1"></i> New Asset / Property
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Portfolio KPI Ribbon -->
+                            <div class="row g-3 mt-1">
+                                <div class="col-6 col-md-3">
+                                    <div class="p-3 bg-light rounded-3 border">
+                                        <div class="text-muted small text-uppercase fw-bold">Portfolio Basis</div>
+                                        <div class="fs-4 fw-bold text-dark tabular-nums" id="portfolio-total-basis">$0.00</div>
+                                        <small class="text-muted">Total acquisition value</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-3 bg-light rounded-3 border">
+                                        <div class="text-muted small text-uppercase fw-bold">Gross Inflows</div>
+                                        <div class="fs-4 fw-bold text-success tabular-nums" id="portfolio-total-inflow">$0.00</div>
+                                        <small class="text-muted">Rent & revenue earned</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-3 bg-light rounded-3 border">
+                                        <div class="text-muted small text-uppercase fw-bold">Operating Outflows</div>
+                                        <div class="fs-4 fw-bold text-danger tabular-nums" id="portfolio-total-outflow">$0.00</div>
+                                        <small class="text-muted">Repairs, taxes, utilities</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-3 bg-primary text-white rounded-3 shadow-sm">
+                                        <div class="text-white-50 small text-uppercase fw-bold">Net Cashflow (NOI)</div>
+                                        <div class="fs-4 fw-bold tabular-nums" id="portfolio-total-net">$0.00</div>
+                                        <small class="text-white-50">Cumulative net return</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Add Asset Form (Collapsible) -->
+                            <div id="add-asset-collapse" class="mt-4 p-3 bg-light rounded-3 border" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-building-add me-2 text-primary"></i>Add Asset / Property</h5>
+                                    <button type="button" class="btn-close btn-sm" onclick="window.toggleAddAssetForm()"></button>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold text-muted">Asset Name / Property</label>
+                                        <input type="text" id="asset-name" class="form-control"
+                                            placeholder="e.g. 816 Yolo St., 222 MacDonald Lane, Ponderosa Park">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold text-muted">Category</label>
+                                        <select id="asset-category" class="form-select">
+                                            <option value="Real Estate">Real Estate</option>
+                                            <option value="Land">Land</option>
+                                            <option value="Vehicle">Vehicle</option>
+                                            <option value="Equipment">Equipment</option>
+                                            <option value="Inventory">Inventory</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold text-muted">Cost Basis / Value ($)</label>
+                                        <input type="number" id="asset-value" class="form-control" placeholder="Purchase Price" step="0.01">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold text-muted">Acquisition Date</label>
+                                        <input type="date" id="asset-date" class="form-control">
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button onclick="addAsset()" class="btn btn-dark w-100 py-2 fw-bold shadow-sm">
+                                            <i class="bi bi-check-lg me-1"></i> Save Asset
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Portfolio View Controls & Filter Bar -->
+                        <div class="card p-3 mb-3 border-0 shadow-sm bg-light">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div class="btn-group" role="group">
+                                    <button type="button" id="btn-view-ledger" class="btn btn-sm btn-primary px-3 fw-bold" onclick="window.setPortfolioView('ledger')">
+                                        <i class="bi bi-table me-1"></i> Ledger Table
+                                    </button>
+                                    <button type="button" id="btn-view-cards" class="btn btn-sm btn-outline-secondary px-3" onclick="window.setPortfolioView('cards')">
+                                        <i class="bi bi-grid-fill me-1"></i> Cards View
+                                    </button>
+                                </div>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <label class="small text-muted fw-bold mb-0">Category:</label>
+                                    <select id="portfolio-category-filter" class="form-select form-select-sm" style="width: auto;" onchange="window.filterPortfolio && window.filterPortfolio()">
+                                        <option value="ALL">All Categories</option>
                                         <option value="Real Estate">Real Estate</option>
+                                        <option value="Land">Land</option>
                                         <option value="Vehicle">Vehicle</option>
                                         <option value="Equipment">Equipment</option>
                                         <option value="Inventory">Inventory</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
-                                    <input type="number" id="asset-value" class="form-control" placeholder="Purchase Price">
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="date" id="asset-date" class="form-control">
-                                </div>
-                                <div class="col-md-2">
-                                    <button onclick="addAsset()" class="btn btn-dark w-100">Add Asset</button>
-                                </div>
                             </div>
+                        </div>
 
-                            <div class="row g-3" id="asset-grid">
+                        <!-- Portfolio Ledger Table View (Default) -->
+                        <div id="portfolio-ledger-view" class="card overflow-hidden border-0 shadow-sm mb-4">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 qb-ledger-table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Asset / Property</th>
+                                            <th>Category</th>
+                                            <th>Acquired</th>
+                                            <th class="text-end">Cost Basis</th>
+                                            <th class="text-end">Total Inflows</th>
+                                            <th class="text-end">Total Outflows</th>
+                                            <th class="text-end">Net Cashflow</th>
+                                            <th class="text-center">Ledger Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="asset-ledger-summary-list">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
                             </div>
+                        </div>
+
+                        <!-- Portfolio Card View (Alternate) -->
+                        <div id="portfolio-cards-view" class="row g-3 d-none mb-4" id="asset-grid">
+                            <!-- Populated by JS -->
                         </div>
                     </section>
                 </div>
@@ -401,6 +727,362 @@
                     <div class="modal-footer border-top-0 pt-0">
                         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
                         <button id="save-tpl-btn" type="button" class="btn btn-primary rounded-pill px-4" onclick="window.saveTemplateSettings ? window.saveTemplateSettings() : null">Save Template</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QuickBooks Asset Register / Individual Ledger Modal -->
+        <div class="modal fade" id="assetLedgerModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-dark text-white py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-journal-bookmark-fill text-warning fs-4"></i>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0" id="ledger-modal-asset-name">Property / Asset Ledger</h5>
+                                <small class="text-white-50" id="ledger-modal-asset-category">General Register</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="window.printCurrentAssetLedger()">
+                                <i class="bi bi-printer me-1"></i> Print Ledger
+                            </button>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body p-4 bg-light">
+                        <!-- Asset KPI Banner -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-3">
+                                <div class="card p-3 border-0 shadow-sm h-100">
+                                    <span class="text-muted small fw-bold text-uppercase">Cost Basis</span>
+                                    <span class="fs-5 fw-bold text-dark tabular-nums" id="ledger-asset-basis">$0.00</span>
+                                    <small class="text-muted" id="ledger-asset-date">Acquired: --</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="card p-3 border-0 shadow-sm h-100">
+                                    <span class="text-muted small fw-bold text-uppercase">Total Inflows</span>
+                                    <span class="fs-5 fw-bold text-success tabular-nums" id="ledger-asset-inflow">+$0.00</span>
+                                    <small class="text-muted">Rent & receipts</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="card p-3 border-0 shadow-sm h-100">
+                                    <span class="text-muted small fw-bold text-uppercase">Total Outflows</span>
+                                    <span class="fs-5 fw-bold text-danger tabular-nums" id="ledger-asset-outflow">-$0.00</span>
+                                    <small class="text-muted">Repairs, taxes, expenses</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="card p-3 border-0 shadow-sm h-100 bg-primary text-white">
+                                    <span class="text-white-50 small fw-bold text-uppercase">Net Cashflow</span>
+                                    <span class="fs-5 fw-bold text-white tabular-nums" id="ledger-asset-net">$0.00</span>
+                                    <small class="text-white-50">Operating balance</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Inline Add to this Asset's Register -->
+                        <div class="card p-3 mb-4 border-0 shadow-sm">
+                            <h6 class="fw-bold mb-3 text-dark d-flex align-items-center">
+                                <i class="bi bi-plus-circle-fill text-primary me-2"></i>Quick Add Entry to this Asset Register
+                            </h6>
+                            <input type="hidden" id="ledger-active-asset-id">
+                            <input type="hidden" id="ledger-active-asset-name">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted mb-1">Date</label>
+                                    <input type="date" id="ledger-entry-date" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted mb-1">Account / Category</label>
+                                    <select id="ledger-entry-category" class="form-select form-select-sm" onchange="window.handleLedgerAccountChange && window.handleLedgerAccountChange(this.value)">
+                                        <optgroup label="Income Accounts">
+                                            <option value="4060 · Rent Income" selected>4060 · Rent Income</option>
+                                            <option value="4015 · Contract Labor Income">4015 · Contract Labor Income</option>
+                                            <option value="4030 · Interest Earned">4030 · Interest Earned</option>
+                                            <option value="4900 · Other Income">4900 · Other Income</option>
+                                        </optgroup>
+                                        <optgroup label="Operating Expenses">
+                                            <option value="6300 · Repairs">6300 · Repairs</option>
+                                            <option value="6850 · Property Taxes">6850 · Property Taxes</option>
+                                            <option value="6820 · Taxes">6820 · Taxes</option>
+                                            <option value="6180 · Insurance">6180 · Insurance</option>
+                                            <option value="6390 · Utilities">6390 · Utilities</option>
+                                            <option value="6200 · Interest Expense">6200 · Interest Expense</option>
+                                            <option value="6375 · Mortgage Interest">6375 · Mortgage Interest</option>
+                                            <option value="6150 · Depreciation Expense">6150 · Depreciation Expense</option>
+                                            <option value="6560 · Payroll Expenses">6560 · Payroll Expenses</option>
+                                            <option value="6110 · Automobile Expense">6110 · Automobile Expense</option>
+                                            <option value="6770 · Supplies">6770 · Supplies</option>
+                                            <option value="6790 · Office Supplies">6790 · Office Supplies</option>
+                                            <option value="6990 · Other Operating Expense">6990 · Other Operating Expense</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted mb-1">Payee / Tenant</label>
+                                    <input type="text" id="ledger-entry-payee" class="form-control form-control-sm" placeholder="Tenant / Contractor">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted mb-1">Memo / Desc</label>
+                                    <input type="text" id="ledger-entry-desc" class="form-control form-control-sm" placeholder="Description">
+                                </div>
+                                <div class="col-md-1">
+                                    <label class="form-label small fw-bold text-muted mb-1">Amount ($)</label>
+                                    <input type="number" id="ledger-entry-amount" class="form-control form-control-sm" placeholder="0.00" step="0.01">
+                                </div>
+                                <div class="col-md-1">
+                                    <label class="form-label small fw-bold text-muted mb-1">Flow</label>
+                                    <select id="ledger-entry-dr-cr" class="form-select form-select-sm fw-bold">
+                                        <option value="debit">Debit (DR)</option>
+                                        <option value="credit">Credit (CR)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-primary btn-sm w-100 fw-bold" onclick="window.saveLedgerEntry()">
+                                        <i class="bi bi-check-lg"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- QuickBooks Account Register Table -->
+                        <div class="card overflow-hidden border-0 shadow-sm">
+                            <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-0 text-muted small text-uppercase"><i class="bi bi-clock-history me-1"></i>General Ledger Register</h6>
+                                <span class="badge bg-light text-muted border" id="ledger-entries-count">0 entries</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 qb-ledger-table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Account / Code</th>
+                                            <th>Payee / Tenant</th>
+                                            <th>Memo / Description</th>
+                                            <th class="text-end text-success">Debit (DR)</th>
+                                            <th class="text-end text-danger">Credit (CR)</th>
+                                            <th class="text-end">Balance</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="asset-ledger-table-body">
+                                        <!-- Register Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-white border-top">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close Ledger</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QuickBooks Profit & Loss Interactive Preview Modal -->
+        <div class="modal fade" id="qbReportModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-dark text-white py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark-spreadsheet-fill text-success fs-4"></i>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0">QuickBooks Statement Preview</h5>
+                                <small class="text-white-50" id="report-modal-date-range">Profit & Loss</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="window.printReportContent()">
+                                <i class="bi bi-printer me-1"></i> Print / Save PDF
+                            </button>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body p-4 bg-light" id="qb-report-modal-content">
+                        <!-- Rendered P&L Sheet -->
+                    </div>
+                    <div class="modal-footer bg-white border-top">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company & QuickBooks Settings Modal -->
+        <div class="modal fade" id="companySettingsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-primary text-white py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-building fs-4"></i>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0">Company & QuickBooks Profile</h5>
+                                <small class="text-white-50">Reporting Entity Settings</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Company / Entity Legal Name</label>
+                            <input type="text" id="company-name-input" class="form-control" placeholder="e.g. Lambda West, Inc.">
+                            <small class="text-muted">Appears at top of QuickBooks Profit & Loss and tax reports.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Default Accounting Method</label>
+                            <select id="company-default-basis" class="form-select">
+                                <option value="Accrual Basis" selected>Accrual Basis</option>
+                                <option value="Cash Basis">Cash Basis</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Fiscal Year End</label>
+                            <input type="text" id="company-fiscal-year" class="form-control" value="December 31" placeholder="e.g. December 31">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top bg-light">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" onclick="window.saveCompanySettings()">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Balance Sheet Accounts & Initial Balances Setup Modal -->
+        <div class="modal fade" id="balanceSheetSetupModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-success text-white py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-bank2 fs-4"></i>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0">Balance Sheet Accounts Setup</h5>
+                                <small class="text-white-50">Banking, Notes Receivable, Liabilities, and Equity</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 bg-light">
+                        <p class="small text-muted mb-3">These account balances automatically flow into your official <strong>QuickBooks Balance Sheet</strong> statement (Assets = Liabilities + Equity).</p>
+                        
+                        <div class="card p-3 mb-3 border-0 shadow-sm">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-wallet2 text-primary me-2"></i>Checking & Savings (Current Assets)</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted mb-1">1005 · STCU Checking/Savings ($)</label>
+                                    <input type="number" id="bs-stcu-balance" class="form-control form-control-sm" step="0.01" value="27977.23">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted mb-1">1002 · Petty Cash ($)</label>
+                                    <input type="number" id="bs-petty-cash" class="form-control form-control-sm" step="0.01" value="-1566.97">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-3 mb-3 border-0 shadow-sm">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-cash-stack text-success me-2"></i>Other Current Assets / Notes Receivable</h6>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted mb-1">1260 · Horizons Unlimited, Inc. ($)</label>
+                                    <input type="number" id="bs-horizons" class="form-control form-control-sm" step="0.01" value="40000.00">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted mb-1">1256 · Harold Holmes ($)</label>
+                                    <input type="number" id="bs-holmes" class="form-control form-control-sm" step="0.01" value="10716.06">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted mb-1">1257 · Yaroslav Nikolaychuk ($)</label>
+                                    <input type="number" id="bs-yaroslav" class="form-control form-control-sm" step="0.01" value="8090.40">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-3 mb-3 border-0 shadow-sm">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-lock text-danger me-2"></i>Long Term Liabilities</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted mb-1">2318 · Balser Trust, Janet ($)</label>
+                                    <input type="number" id="bs-balser-janet" class="form-control form-control-sm" step="0.01" value="197000.00">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted mb-1">2319 · Balser Trust, Rob ($)</label>
+                                    <input type="number" id="bs-balser-rob" class="form-control form-control-sm" step="0.01" value="140000.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-3 border-0 shadow-sm">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-pie-chart text-info me-2"></i>Equity</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted mb-1">3000 · Opening Bal Equity ($)</label>
+                                    <input type="number" id="bs-opening-equity" class="form-control form-control-sm" step="0.01" value="-68420.19">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted mb-1">3200 · Retained Earnings ($)</label>
+                                    <input type="number" id="bs-retained-earnings" class="form-control form-control-sm" step="0.01" value="881682.54">
+                                </div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">* Current year Net Income is automatically calculated from your Profit & Loss statement.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top bg-white">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success rounded-pill px-4 fw-bold" onclick="window.saveBalanceSheetSettings()">Save Balances</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receive Invoice Payment Modal (Image 5 Workflow) -->
+        <div class="modal fade" id="receivePaymentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-primary text-white py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-cash-coin fs-4"></i>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0">Receive Customer Payment</h5>
+                                <small class="text-white-50">Transfer to Savings / Checking & Credit Accounts Receivable</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="rcv-invoice-id">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Customer / Payee</label>
+                            <input type="text" id="rcv-customer-name" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Payment Date</label>
+                                <input type="date" id="rcv-payment-date" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Amount Received ($)</label>
+                                <input type="number" id="rcv-payment-amount" class="form-control fw-bold" step="0.01">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Deposit To (Debit Account)</label>
+                            <select id="rcv-deposit-account" class="form-select">
+                                <option value="1005 · STCU Checking/Savings" selected>1005 · STCU Checking/Savings</option>
+                                <option value="1002 · Petty Cash">1002 · Petty Cash</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Reference / Check # (e.g. Pd ck # 7824 DR)</label>
+                            <input type="text" id="rcv-memo" class="form-control" placeholder="e.g. Pd ck # 7824 DR">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top bg-light">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" onclick="window.submitReceivePayment()">Record Payment</button>
                     </div>
                 </div>
             </div>
